@@ -1,7 +1,7 @@
 # The Wren London — Multi-Agent AI Demo: Design Document
 
 **Version:** 1.0 (2026-07-02)
-**Owner:** Ashwin Rana, Partner Solutions Engineering, Talkdesk
+**Owner:** Ashwin Rana, VP of Partner Solutions Engineering, Talkdesk
 **Status:** Approved for build
 **Companion file:** `CLAUDE.md` (Claude Code build instructions — this document is the authoritative spec; CLAUDE.md defers to it)
 
