@@ -85,7 +85,7 @@ WhatsApp 15-minute lapse → reconnection re-runs whatever tier the next request
 | # | Agent | Responsibilities | Skills (≤5) | Notes |
 |---|---|---|---|---|
 | — | **Orchestrator** | Routing only. Disambiguation ("your room booking, or something else?"). Deflection line for restaurant intents. Assent-tightening + no-re-dispatch rules. | — | One-line routing conditions per intent; no entitlement/date logic |
-| 1 | **Auth Agent** | Identity resolution (phone/email lookup), OTP send + `verify_otp`, returns **entitlement context** payload: `{profile_id, is_member, membership_years, in_house, upcoming_stay{arrival, departure, confirmation}}` | `execute_sql`, `send_sms` (OTP), `verify_otp` = 3 | Reference-quality; reuse from The Wren restaurant build with entitlement-context extension only |
+| 1 | **Auth Agent** | Identity resolution (phone/email lookup), OTP send + `verify_otp`, returns **entitlement context** payload: `{profile_id, name_given, name_surname, email, phone, is_member, membership_years, in_house, upcoming_stay{arrival, departure, confirmation}}` (identity fields let downstream agents address the guest and send confirmations without a second lookup) | `execute_sql`, `send_sms` (OTP), `verify_otp` = 3 | Reference-quality; reuse from The Wren restaurant build with entitlement-context extension only |
 | 2 | **Room Reservation Agent** | Availability (`get_hotel_availability` shape), quote, create booking (atomic CTE write), lead-time guard, confirmation send | `execute_sql`, `send_email`, `send_sms` = 3 | Step 1.0 clock fetch mandatory |
 | 3 | **Room Update Agent** | Modify dates/room type/party, cancel, **apply accepted upgrade offer** (`accept_upgrade_offer`) | `execute_sql`, `send_email`, `send_sms` = 3 | Step 1.0 clock fetch mandatory; preserves `confirmation_number` across modifications; claim-new-inventory-first CTE |
 | 4 | **Club Access Agent** | Answers access questions via `check_club_access(profile_id, access_date)` → 5 statuses → 5 fixed templates | `execute_sql` = 1 | Tiny by design; date resolution via Step 1.0 clock fetch when customer says "tonight/tomorrow" |
@@ -144,6 +144,10 @@ Returns JSON:
 {
   "profile_id": "P1001",
   "name": "James Thompson",
+  "name_given": "James",
+  "name_surname": "Thompson",
+  "email": "james.thompson@example.co.uk",
+  "phone": "+447700900101",
   "is_member": true,
   "membership_years": 12,
   "in_house": false,
@@ -157,7 +161,7 @@ Returns JSON:
   "stays_this_year": 3
 }
 ```
-`membership_years` and `stays_this_year` are **computed** (from `enrollment_date` and `CheckedOut` reservations), never stored.
+`membership_years` and `stays_this_year` are **computed** (from `enrollment_date` and `CheckedOut` reservations), never stored. `name_given` / `name_surname` are returned **separated** (not just the concatenated `name`) so downstream agents address the guest correctly in confirmations, and `email` / `phone` are included so the Room Reservation, Room Update, and Spa agents can send email/SMS confirmations without a second lookup (mirrors the restaurant build's `get_customer_context`).
 
 ### `check_club_access(p_profile_id, p_access_date)` — per-question, Club Access Agent
 Decision is a single SQL CASE; the model maps the returned status to a fixed template and substitutes placeholders. **Five statuses:**

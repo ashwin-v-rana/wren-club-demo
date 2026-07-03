@@ -144,6 +144,10 @@ begin
   return json_build_object(
     'profile_id', v_profile.profile_id,
     'name', v_profile.name_given || ' ' || v_profile.name_surname,
+    'name_given', v_profile.name_given,
+    'name_surname', v_profile.name_surname,
+    'email', v_profile.email,
+    'phone', v_profile.phone,
     'is_member', coalesce(v_is_member, false),
     'membership_years', v_years,
     'in_house', (v_in_house_room is not null),
