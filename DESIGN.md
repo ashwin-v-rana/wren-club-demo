@@ -485,8 +485,11 @@ Purpose: the **staff-side view** that makes the invisible visible during demos �
 
 ## 13. Build Order
 
+*Status: step 1 (Supabase backend) is implemented, deployed, and passes the full test checklist — see CLAUDE.md. Steps 2–5 are next.*
+
 1. Supabase: schema (§8) → functions → seed + `reset_demo()`/`advance_demo()` → SQL-level tests of every function including failure paths (NO_AVAILABILITY, NOT_IN_HOUSE, EXPIRED offer). Include the upgrade sold-out case: sell out COSY_PLUS for Thompson's dates, call `accept_upgrade_offer('U4001')` → `NO_AVAILABILITY`, and verify the offer is still `Offered`, the reservation still `COSY`, and inventory unchanged.
 2. Console app (§11) against the same functions
-3. Talkdesk: Auth Agent extension → Club Access Agent (smallest, proves the pattern) → Guest Services → Room Reservation/Update → Spa → Concierge → Orchestrator routing + deflection
+3. Talkdesk: Auth Agent extension → Club Access Agent (smallest, proves the pattern) → Guest Services → Room Reservation/Update → Spa → Concierge → Orchestrator routing + deflection.
+   **Authoring vs. deployment:** author each agent's *instruction text* (persona, step logic, fixed templates, routing conditions) in a chat model — ideally one grounded in the frozen §8 function contract so skills bind to exact names/params/return shapes and templates never drift — then *assemble and deploy* the runnable agent system (Orchestrator + Action Agents, skill→tool/MCP bindings, export/import JSON) inside Talkdesk itself. Measure every agent prompt against the ~12–14k char ceiling with `printf '%s' "$TEXT" | wc -c` (§2); never estimate.
 4. Per-touchpoint config: `ai_agent_settings.timezone` on voice, chat, WhatsApp (JSON `:` syntax) — verify each with a "what is the current time?" diagnostic before any flow testing
 5. End-to-end script rehearsal ×3 with `reset_demo()` between runs

@@ -41,7 +41,7 @@ CLAUDE.md
 
 ## Stack & commands
 
-- **Backend:** Supabase (hosted). Apply migrations with the Supabase CLI: `supabase db push` (or `supabase migration up` locally). SQL functions are `SECURITY DEFINER`, return `json`.
+- **Backend:** Supabase (hosted). SQL functions are `SECURITY DEFINER`, return `json`. **Status: built, deployed, and tested** — migrations `01`–`05` are applied to the provisioned `hospitality_hotel_club` project and pass the full test checklist below. Apply migrations with the Supabase CLI (`supabase db push`) or the Supabase MCP `apply_migration`. The project ref + service-role key live in `console/.env.local` (gitignored) and project memory — never commit them.
 - **Console:** Next.js (App Router) + TypeScript + Tailwind. `@supabase/supabase-js` is used **server-side only**.
 - **Backend-mediated access (hard rule):** the browser NEVER talks to Supabase. All data flows browser → Next.js route handlers / server actions → Supabase with the service-role key. No Supabase URL or key may appear in client-delivered code — therefore no `NEXT_PUBLIC_SUPABASE_*` variables at all.
 - Dev: `cd console && npm install && npm run dev`
@@ -123,3 +123,4 @@ Styling: The Wren-adjacent, Art Deco restraint — dark green (#1a3a32-ish), bra
 - **Why is OTP stored in a table readable by the demo?** Demo-scoped decision so flows can be tested when a test phone can't receive SMS. Production design moves the secret into session-global workflow storage. Leave a comment saying exactly that.
 - **Why does the console call the same functions as the agents?** The symmetry is part of the pitch: one deterministic contract, two clients (AI agents + staff console), zero drift.
 - **Why offsets instead of dates?** Demos are re-run weeks apart; `reset_demo()` the morning-of makes the data fresh forever.
+- **Where are the Talkdesk agents built?** Outside this repo. Author each agent's *instruction text* in a chat model (grounding it in this repo's frozen §8 function contract keeps skill bindings and templates from drifting — this Claude Code session, which holds the contract + the restaurant-build reference, is a good authoring surface); then *assemble and deploy* the runnable agent system (Orchestrator + Action Agents, skill→tool/MCP bindings pointed at this project's ref, export/import JSON) in Talkdesk. Measure every prompt with `printf '%s' "$TEXT" | wc -c` against the ~12–14k ceiling. Agents reach the DB only through the same SQL functions the console uses — one contract, two clients.

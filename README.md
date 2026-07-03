@@ -55,7 +55,7 @@ Design principles that run through everything:
 |---|---|
 | `DESIGN.md` | The authoritative spec: agents, entitlement design, full schema, personas, demo script |
 | `CLAUDE.md` | Build instructions for Claude Code (Supabase migrations + console app) |
-| `supabase/` | Schema, functions, and date-relative seed migrations *(generated from the spec)* |
+| `supabase/` | Schema, functions, and date-relative seed migrations — implemented and tested *(`migrations/01`–`05`, plus `seed-notes.md`)* |
 | `console/` | Next.js front-desk console — reservations, service-request board, demo controls |
 
 ## Getting started
@@ -64,11 +64,11 @@ Design principles that run through everything:
 2. Provision a Supabase project and apply the migrations in `supabase/migrations/`.
 3. Run `select reset_demo();` — all seed data is date-relative, so the demo world is always fresh.
 4. `cd console && npm install && npm run dev` (env vars documented in `CLAUDE.md`).
-5. Wire the SQL functions as skills in your Talkdesk AI Agent environment per `DESIGN.md` §4–§7.
+5. Wire the SQL functions as skills in your Talkdesk AI Agent environment per `DESIGN.md` §4–§7. Author each agent's instructions in a chat model (grounded in the function contract so skill bindings don't drift), then assemble and deploy the agent system in Talkdesk itself.
 
 ## Status
 
-Active build. The design (schema, functions, personas, demo script) is complete; Supabase and console implementation are in progress.
+Active build. The design (schema, functions, personas, demo script) is complete. **The Supabase backend is implemented, deployed, and passes its full test checklist** — availability/booking, date-aware entitlement, upgrade acceptance, service requests, spa, proactive sends, and every failure path. Next: the Next.js Front-Desk Console, then the Talkdesk agent system.
 
 ---
 
