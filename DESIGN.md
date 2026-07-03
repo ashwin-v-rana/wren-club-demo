@@ -1,8 +1,9 @@
 # The Wren London — Multi-Agent AI Demo: Design Document
 
-**Version:** 1.0 (2026-07-02)
+**Version:** 1.1 (2026-07-02)
 **Owner:** Ashwin Rana, VP of Partner Solutions Engineering, Talkdesk
-**Status:** Approved for build
+**Status:** Approved for build — function contract frozen
+**v1.1 changes:** `accept_upgrade_offer` full transaction contract (adds `DECLINED`/`NO_AVAILABILITY`); OTP confirmed as Talkdesk-workflow only (no SQL function); added proactive-send functions `fire_pre_arrival_upgrade`/`fire_milestone` with SQL-owned templates; `outbound_messages` v1 = proactive-only; `put_reservation` set-difference claim/release; `cancel_reservation` guard + only-`Reserved`-cancellable; `check_club_access` tie-breaks; confirmation-number retry loop.
 **Companion file:** `CLAUDE.md` (Claude Code build instructions — this document is the authoritative spec; CLAUDE.md defers to it)
 
 ---
@@ -181,6 +182,11 @@ Return shape (always includes next stay so `FUTURE_STAY_ONLY` can be rendered):
 2. No date given: if `in_house` or `is_member` → pass today (London); else if `upcoming_stay` exists → pass its `arrival_date`.
 3. Agent may only claim access from a status returned **this turn**.
 
+**Status precedence & tie-breaks (resolved deterministically in the SQL CASE):**
+1. **Membership evaluated first.** A guest who is both an active member and currently in-house resolves to `MEMBER_ACCESS` (the stronger, date-independent claim), not `IN_HOUSE_ACCESS`.
+2. **Stay window is `[arrival_date, departure_date]` inclusive** for access purposes — a checkout-day rooftop visit still resolves to access.
+3. **Multiple future stays:** `next_stay` is the soonest stay with `arrival_date >= access_date`, chosen by a deterministic `ORDER BY arrival_date` (so `FUTURE_STAY_ONLY` and `UPCOMING_STAY` always render against one specific stay).
+
 Future-proofing: an optional `room_category_access` join point is stubbed (commented) in the function for the possible Large-and-above rooftop rule.
 
 ---
@@ -192,7 +198,7 @@ Future-proofing: an optional `room_category_access` join point is stubbed (comme
 | Verified clock | Step 1.0 `SELECT now() AT TIME ZONE 'Europe/London'` → `today` / `now_time` literals used by all subsequent guards; system-prompt clock never referenced | Room Reservation, Room Update, Spa, Club Access |
 | Booking lead-time | CASE in SQL against Step 1.0 literals | Room Reservation, Spa |
 | Availability + atomic write | Claim-inventory-first CTE; insert filtered on available count | Room Reservation, Room Update |
-| Upgrade acceptance | `accept_upgrade_offer(offer_id)` single UPDATE … WHERE `status='Offered' AND expires_at > now()` returning row or nothing — idempotent; second "yes" returns ALREADY_ACCEPTED template | Room Update |
+| Upgrade acceptance | `accept_upgrade_offer(offer_id)` in one transaction, claim-new-inventory-first: guarded validation (`Offered`/`Accepted`/`Declined`/expired) → claim `to_room_type` for every night → on success move the reservation and release `from_room_type`, else `NO_AVAILABILITY` with the offer left `Offered` and the guest never stranded. Idempotent; returns `ACCEPTED` / `ALREADY_ACCEPTED` / `DECLINED` / `EXPIRED` / `NO_AVAILABILITY` / `NOT_FOUND`, each mapped to a fixed template | Room Update |
 | OTP match | `verify_otp` workflow MATCH/NO_MATCH; no in-model comparison | Auth |
 | Service request catalog | Ask matched to `request_codes` row; department + ETA text come from the table; unmatched → GENERAL_REQUEST fallback row + duty-manager template | Guest Services |
 | Room number integrity | Write target = room from `CheckedIn` reservation row; customer input used for confirmation only | Guest Services |
@@ -200,7 +206,7 @@ Future-proofing: an optional `room_category_access` join point is stubbed (comme
 | Personalised suggestions | History row retrieved by SQL, rendered via fixed template; if query returns no row, no suggestion is made | Spa |
 | Destructive-action assent | Explicit in-transcript confirmation before dispatch | Orchestrator |
 
-**Production-hardening note (post-demo, carried from restaurant build):** OTP remains visible to the agent/logs by demo-scoped choice; production moves the secret to session-global storage inside the workflow.
+**OTP is a Talkdesk-workflow concern, not a SQL function (settled from the restaurant build).** `send_one_time_pin` / `send_one_time_pin_UK` generate the code, send it, and return it as `sent_pin`; `verify_otp` compares `entered_pin` against `sent_pin` in-workflow and returns MATCH/NO_MATCH. The secret never touches Postgres for the mechanism to work — which is already the production pattern. This repo therefore builds **no** `request_otp`/`verify_otp` function; `otp_codes` (§8.12) exists solely as a demo-read affordance so staff can surface the code when a test phone can't receive SMS.
 
 ---
 
@@ -351,7 +357,10 @@ create table activity_bookings (
   created_at          timestamptz not null default now()
 );
 
--- 8.12 otp_codes  (demo-scoped; production: session-global storage in workflow)
+-- 8.12 otp_codes  (demo-read affordance ONLY — lets staff read the code when a test phone can't receive SMS)
+--   OTP generation, send, and verification are Talkdesk WORKFLOW skills reused from the restaurant build
+--   (send_one_time_pin / send_one_time_pin_UK return the code as sent_pin; verify_otp compares in-workflow).
+--   The secret lives in session-global workflow storage; there is NO request_otp/verify_otp SQL function here.
 create table otp_codes (
   otp_id            text primary key,
   profile_id        text not null references profiles,
@@ -362,7 +371,11 @@ create table otp_codes (
   consumed          boolean not null default false
 );
 
--- 8.13 outbound_messages  (audit log for proactive sends + agent-sent messages; feeds the console)
+-- 8.13 outbound_messages  (audit log that feeds the console message-log view)
+--   v1 is populated ONLY by the two proactive sends (fire_pre_arrival_upgrade → 'PRE_ARRIVAL_UPGRADE',
+--   fire_milestone → 'MILESTONE_THANKS'), matching the restaurant precedent where agent-sent messages
+--   (booking confirmations, OTP) are delivered Talkdesk-side and not DB-logged. 'CONFIRMATION','OTP','AGENT'
+--   remain valid trigger_type values reserved for a later change if the console log should also show them.
 create table outbound_messages (
   message_id        text primary key,
   hotel_id          text not null default 'WRENLON',
@@ -383,11 +396,13 @@ create table outbound_messages (
 | `get_guest_profile(p_profile_id text)` | profile + membership summary |
 | `get_hotel_availability(p_hotel_id text, p_arrival date, p_departure date, p_adults int)` | per room_type: min available across the date range + rate |
 | `get_available_upsells(p_reservation_id text)` | next-higher room types with availability across the stay |
-| `post_reservation(p_profile_id, p_room_type_code, p_arrival, p_departure, p_adults)` | atomic CTE: claim inventory rows (increment `booked` only where `booked < capacity` for **every** night) then insert; returns reservation JSON or `{"error":"NO_AVAILABILITY"}`; generates phonetic-safe confirmation_number |
-| `put_reservation(p_reservation_id, new dates/room_type/adults)` | claim-new-inventory-first, release old on success; **confirmation_number preserved**; returns updated JSON or NO_AVAILABILITY (original untouched) |
-| `cancel_reservation(p_reservation_id text)` | status → Cancelled; release inventory; idempotent |
-| `accept_upgrade_offer(p_offer_id text)` | single guarded UPDATE (`status='Offered' AND expires_at>now()`); on success also `put_reservation` room_type via claim-first; returns ACCEPTED / ALREADY_ACCEPTED / EXPIRED / NOT_FOUND |
-| `get_pre_arrival_member_reservations(p_hotel_id text, p_days_ahead int)` | member reservations arriving within window — feeds proactive workflow |
+| `post_reservation(p_profile_id, p_room_type_code, p_arrival, p_departure, p_adults)` | atomic CTE: claim inventory rows (increment `booked` only where `booked < capacity` for **every** night) then insert; returns reservation JSON or `{"error":"NO_AVAILABILITY"}`; generates phonetic-safe confirmation_number via **generate-and-retry loop** (regenerate on unique-constraint violation, capped attempts — a coincidental collision never fails the booking) |
+| `put_reservation(p_reservation_id, new dates/room_type/adults)` | **set-difference claim/release** over inventory keys `(room_type_code, inventory_date)`: with `S_old` = existing booking's keys and `S_new` = requested keys, claim `S_new \ S_old` all-or-nothing (guarded), then release `S_old \ S_new`. A room-type change adds all new-type nights and releases all old-type nights; a date-only change touches only the delta nights — overlapping nights are never double-claimed against the guest's own booking. **confirmation_number preserved**; returns updated JSON or NO_AVAILABILITY (original untouched) |
+| `cancel_reservation(p_reservation_id text)` | idempotent, guarded: only a non-Cancelled→Cancelled transition releases inventory (second call never double-releases). Only `Reserved` is cancellable; `CheckedIn`/`CheckedOut` are not. Returns `CANCELLED` / `ALREADY_CANCELLED` / `NOT_CANCELLABLE` / `NOT_FOUND` |
+| `accept_upgrade_offer(p_offer_id text)` | one transaction, claim-new-inventory-first (reuses the `put_reservation` pattern). Validate offer: no row → `NOT_FOUND`; `Accepted` → `ALREADY_ACCEPTED`; `Declined` → `DECLINED`; `expires_at <= now()` → `EXPIRED` (and flip status to `Expired`). Then claim `to_room_type` inventory for **every** night of the linked reservation in one statement — on failure return `NO_AVAILABILITY` (offer stays `Offered`, reservation and confirmation_number untouched, inventory unchanged; guest never stranded); on success release `from_room_type` inventory those nights, update `reservations.room_type_code` (confirmation_number preserved), set offer `Accepted` + `responded_at`, and return `ACCEPTED` with the updated reservation JSON |
+| `get_pre_arrival_member_reservations(p_hotel_id text, p_days_ahead int)` | member reservations arriving within window — feeds proactive workflow (read-only) |
+| `fire_pre_arrival_upgrade(p_hotel_id text, p_days_ahead int)` | demo-specific proactive send: for member reservations with an `Offered` upgrade in-window, substitute the fixed template (tenure + from/to room types, computed in SQL — no model), insert a `PRE_ARRIVAL_UPGRADE` row into `outbound_messages`; does **not** create the offer (`reset_demo` seeds it). Backs `POST /api/demo/fire-pre-arrival` |
+| `fire_milestone(p_profile_id text)` | demo-specific proactive send: compute `stays_this_year` live, substitute the fixed milestone template in SQL, insert a `MILESTONE_THANKS` row into `outbound_messages`. Backs `POST /api/demo/fire-milestone` |
 | `post_service_request(p_profile_id, p_code, p_quantity, p_comment)` | requires a `CheckedIn` reservation for profile (else `{"error":"NOT_IN_HOUSE"}`); room + department resolved server-side; returns full request JSON incl. `eta_text` |
 | `get_service_requests(p_profile_id text)` | open + recent requests with status timestamps |
 | `get_activity_availability(p_activity_type_code text, p_date date)` | open slots |
@@ -470,7 +485,7 @@ Purpose: the **staff-side view** that makes the invisible visible during demos �
 
 ## 13. Build Order
 
-1. Supabase: schema (§8) → functions → seed + `reset_demo()`/`advance_demo()` → SQL-level tests of every function including failure paths (NO_AVAILABILITY, NOT_IN_HOUSE, EXPIRED offer)
+1. Supabase: schema (§8) → functions → seed + `reset_demo()`/`advance_demo()` → SQL-level tests of every function including failure paths (NO_AVAILABILITY, NOT_IN_HOUSE, EXPIRED offer). Include the upgrade sold-out case: sell out COSY_PLUS for Thompson's dates, call `accept_upgrade_offer('U4001')` → `NO_AVAILABILITY`, and verify the offer is still `Offered`, the reservation still `COSY`, and inventory unchanged.
 2. Console app (§11) against the same functions
 3. Talkdesk: Auth Agent extension → Club Access Agent (smallest, proves the pattern) → Guest Services → Room Reservation/Update → Spa → Concierge → Orchestrator routing + deflection
 4. Per-touchpoint config: `ai_agent_settings.timezone` on voice, chat, WhatsApp (JSON `:` syntax) — verify each with a "what is the current time?" diagnostic before any flow testing
