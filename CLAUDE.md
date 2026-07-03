@@ -15,8 +15,8 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 4b. **The browser never talks to Supabase.** All data access is browser → Next.js backend → Supabase (service-role key, server-only). No Supabase keys or URLs in client code, no `NEXT_PUBLIC_SUPABASE_*` env vars, no client-side Realtime subscriptions.
 5. **Determinism lives in SQL.** Availability checks, entitlement decisions, ETA promises, and status transitions are computed inside functions (single guarded statements / CTEs), never in application code and never left to a model.
 6. **Computed, not stored.** `membership_years` and `stays_this_year` are computed from `enrollment_date` and `CheckedOut` reservations at query time. Do not add columns for them.
-7. **Idempotency.** `accept_upgrade_offer` and `cancel_reservation` must be safe to call twice (guarded UPDATE returning distinct statuses: ACCEPTED / ALREADY_ACCEPTED / EXPIRED / NOT_FOUND).
-8. **Atomicity.** `post_reservation` and `put_reservation` use claim-inventory-first CTEs: increment `booked` only where `booked < capacity` for **every** night of the stay, in one statement; insert/update only if the claim succeeded; on failure return `{"error":"NO_AVAILABILITY"}` and leave everything untouched (put_reservation must never strand the guest — old booking stays intact).
+7. **Idempotency.** `accept_upgrade_offer` and `cancel_reservation` must be safe to call twice (guarded transitions returning distinct statuses). `accept_upgrade_offer` → `ACCEPTED / ALREADY_ACCEPTED / DECLINED / EXPIRED / NO_AVAILABILITY / NOT_FOUND` (claim-new-inventory-first; on NO_AVAILABILITY the offer stays `Offered` and the guest is never stranded — see DESIGN.md §8). `cancel_reservation` → `CANCELLED / ALREADY_CANCELLED / NOT_CANCELLABLE / NOT_FOUND` (only `Reserved` cancels; only a non-Cancelled→Cancelled transition releases inventory).
+8. **Atomicity.** `post_reservation` and `put_reservation` use claim-inventory-first CTEs: increment `booked` only where `booked < capacity` for **every** night of the stay, in one statement; insert/update only if the claim succeeded; on failure return `{"error":"NO_AVAILABILITY"}` and leave everything untouched. `put_reservation` uses **set-difference** claim/release over `(room_type_code, inventory_date)` keys — claim `S_new \ S_old` all-or-nothing, then release `S_old \ S_new` — so it never strands the guest and never double-claims an overlapping night against the guest's own booking.
 9. **Confirmation numbers** use the phonetic-safe alphabet from DESIGN.md §8.5 (`A C D E F G H J K M N P Q R T U V W X Y` + digits 3 4 6 7 9), format `WRENLON-XXXXX`. `put_reservation` preserves the existing confirmation_number.
 10. **hotel_id everywhere.** Every table carries `hotel_id` defaulting to `'WRENLON'`; v1 logic may assume WRENLON but must not drop the column.
 
@@ -24,7 +24,7 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 
 ```
 /supabase
-  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions
+  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
 /console             -- Next.js (App Router) + TypeScript + Tailwind front-desk app
   /app
@@ -69,10 +69,11 @@ The browser cannot subscribe to Supabase Realtime (that would violate the backen
 ## Supabase build order
 
 1. `01_schema.sql` — all 13 tables from DESIGN.md §8, in dependency order, with CHECK constraints exactly as specified.
-2. `02_functions.sql` — all functions from DESIGN.md §8 function table. Match signatures exactly; the Talkdesk skill layer will bind to these names.
+2. `02_functions.sql` — all functions from DESIGN.md §8 function table (plus proactive-send functions `fire_pre_arrival_upgrade`/`fire_milestone`). Match signatures exactly; the Talkdesk skill layer will bind to these names. **No `request_otp`/`verify_otp` SQL functions** — OTP send + verification are Talkdesk *workflow* skills reused from the restaurant build (the secret lives in session storage, never Postgres); `otp_codes` is only a demo-read affordance.
 3. `03_seed_static.sql` — room_types, request_codes, activity_types (values in DESIGN.md §9 "Background seed").
 4. `04_demo_functions.sql` — `reset_demo()` and `advance_demo(p_step text)`. `reset_demo()` truncates transactional tables (reservations, upgrade_offers, service_requests, activity_bookings, activity_slots, room_inventory, otp_codes, outbound_messages), then reseeds personas + inventory + slots with date offsets per DESIGN.md §9. `advance_demo` supports at minimum: `'complete_blanket_request'`, `'check_in_thompson'`, `'expire_offers'`. Unknown step → `{"error":"UNKNOWN_STEP"}`.
-5. After migrating, run the test checklist below and fix before touching the console.
+5. `05_harden.sql` — pins `search_path` and revokes EXECUTE from `public`/`anon`/`authenticated` on every function (grants only `service_role`), so a leaked anon key can't call a SECURITY DEFINER function and bypass RLS. Run after functions exist.
+6. After migrating, run the test checklist below and fix before touching the console.
 
 ## Test checklist (run via SQL; all must pass after `select reset_demo();`)
 
@@ -84,7 +85,11 @@ The browser cannot subscribe to Supabase Realtime (that would violate the backen
 - `check_club_access` for a profile with no membership/stays → NO_ACCESS
 - `post_reservation` for a sold-out type/date (set one up) → NO_AVAILABILITY, inventory unchanged
 - `put_reservation` to an unavailable target → NO_AVAILABILITY, original reservation intact
-- `accept_upgrade_offer('U4001')` → ACCEPTED and Thompson's reservation now COSY_PLUS; second call → ALREADY_ACCEPTED
+- `put_reservation` extending a stay when the overlapping night is at capacity (incl. the guest's own booking) → succeeds, claims only the new night (set-difference overlap correctness)
+- `accept_upgrade_offer('U4001')` → ACCEPTED and Thompson's reservation now COSY_PLUS (confirmation_number preserved); second call → ALREADY_ACCEPTED
+- Sell out COSY_PLUS for Thompson's dates, then `accept_upgrade_offer('U4001')` → NO_AVAILABILITY; offer still `Offered`, reservation still COSY, inventory unchanged
+- `advance_demo('expire_offers')` then `accept_upgrade_offer('U4001')` → EXPIRED
+- `cancel_reservation('R3003')` → CANCELLED + inventory released; second call → ALREADY_CANCELLED (no double release); `cancel_reservation('R3002')` (CheckedIn) → NOT_CANCELLABLE
 - `post_service_request('P1002','EXTRA_BLANKET',1,null)` → row with room '412', department 'Housekeeping', eta_text 'within 30 minutes'
 - `post_service_request('P1003', …)` → NOT_IN_HOUSE (Okafor is not checked in)
 - `post_service_request('P1002','GENERAL_REQUEST',1,'a pony please')` → Front Desk fallback row, comment preserved
