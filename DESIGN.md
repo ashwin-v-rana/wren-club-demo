@@ -71,8 +71,10 @@ Deterministic per-action rule table — each Action Agent's instruction states t
 
 | Tier | Identity proof required | Actions |
 |---|---|---|
-| 1 | Channel-verified phone number match (WhatsApp/SMS caller ID resolves to exactly one profile) | Accept complimentary upgrade; service request **status** inquiry; club access questions; general info |
+| 1 | Channel-verified phone match — trusted only on WhatsApp (verified sender); Voice/Chat step up to OTP (see channel-aware note) | Accept complimentary upgrade; service request **status** inquiry; club access questions; general info |
 | 2 | Full OTP via `verify_otp` workflow (deterministic MATCH/NO_MATCH) | Create/modify/cancel reservations; create service requests (writes to a room); spa booking; anything touching payment or dates |
+
+**Channel-aware application (Option A, approved).** A phone number is trusted as identity **only when the channel itself verifies it** — i.e. WhatsApp's verified sender. Voice caller ID (ANI) is spoofable and is never trusted; chat carries no channel number at all. So the effective rule the Auth Agent applies is: **require OTP unless (channel = WhatsApp AND intent = Tier 1).** Two session flags carry the result: `phone_identified` (a trusted number is held — WhatsApp verified sender, or a number proven by OTP; gates Tier-1 reads) and `authenticated` (OTP passed; gates Tier-2 writes). This makes the ANI weakness a talking point — identification vs. authentication — with the tier boundaries as client-tunable policy. Consequence for the demo: the signature one-breath club-access moment runs on **WhatsApp** (verified number, no friction), or takes an OTP step on voice/chat.
 
 WhatsApp 15-minute lapse → reconnection re-runs whatever tier the next requested action requires. Because all in-progress state is in tables, a lapse mid-flow loses nothing: e.g., Thompson can accept his upgrade offer 2 minutes or 2 days after receiving it.
 
@@ -148,6 +150,7 @@ Returns JSON:
   "name_surname": "Thompson",
   "email": "james.thompson@example.co.uk",
   "phone": "+447700900101",
+  "membership_id": "M2001",
   "is_member": true,
   "membership_years": 12,
   "in_house": false,

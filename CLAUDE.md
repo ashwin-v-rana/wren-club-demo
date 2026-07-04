@@ -24,7 +24,7 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 
 ```
 /supabase
-  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields
+  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
 /console             -- Next.js (App Router) + TypeScript + Tailwind front-desk app
   /app
@@ -77,7 +77,7 @@ The browser cannot subscribe to Supabase Realtime (that would violate the backen
 
 ## Test checklist (run via SQL; all must pass after `select reset_demo();`)
 
-- `get_entitlement_context('P1001')` → is_member true, membership_years 12, stays_this_year 3, upcoming_stay present, and identity fields `name_given` / `name_surname` (separated) + `email` + `phone` populated for downstream confirmations
+- `get_entitlement_context('P1001')` → is_member true, membership_years 12, stays_this_year 3, upcoming_stay present, and identity fields `name_given` / `name_surname` (separated) + `email` + `phone` + `membership_id` ('M2001'; null for non-members) populated for downstream confirmations
 - `check_club_access('P1001', current_date)` → MEMBER_ACCESS
 - `check_club_access('P1002', current_date)` → IN_HOUSE_ACCESS
 - `check_club_access('P1003', current_date + 11)` → UPCOMING_STAY

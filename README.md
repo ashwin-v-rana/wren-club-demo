@@ -68,7 +68,7 @@ Design principles that run through everything:
 
 ## Status
 
-Active build. The design (schema, functions, personas, demo script) is complete. **The Supabase backend is implemented, deployed, and passes its full test checklist** — availability/booking, date-aware entitlement, upgrade acceptance, service requests, spa, proactive sends, and every failure path. Next: the Next.js Front-Desk Console, then the Talkdesk agent system.
+Active build. The design (schema, functions, personas, demo script) is complete. **The Supabase backend is implemented, deployed, and passes its full test checklist** — availability/booking, date-aware entitlement, upgrade acceptance, service requests, spa, proactive sends, and every failure path. **The Talkdesk agent system is being authored** — Orchestrator, Authentication (channel-aware), and Club Access agents drafted in `talkdesk/`, grounded in the live SQL contract. The Next.js Front-Desk Console is the remaining major piece.
 
 ---
 
