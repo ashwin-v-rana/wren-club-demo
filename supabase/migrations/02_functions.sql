@@ -96,6 +96,7 @@ as $$
 declare
   v_today date := (now() at time zone 'Europe/London')::date;
   v_profile profiles;
+  v_membership_id text;
   v_is_member boolean;
   v_years int;
   v_in_house_room text;
@@ -107,10 +108,11 @@ begin
     return json_build_object('error', 'NOT_FOUND');
   end if;
 
-  select (m.membership_id is not null),
+  select m.membership_id,
+         (m.membership_id is not null),
          case when m.membership_id is not null
               then date_part('year', age(v_today, m.enrollment_date))::int end
-    into v_is_member, v_years
+    into v_membership_id, v_is_member, v_years
   from (select 1) x
   left join memberships m on m.profile_id = p_profile_id and m.status = 'Active';
 
@@ -148,6 +150,7 @@ begin
     'name_surname', v_profile.name_surname,
     'email', v_profile.email,
     'phone', v_profile.phone,
+    'membership_id', v_membership_id,
     'is_member', coalesce(v_is_member, false),
     'membership_years', v_years,
     'in_house', (v_in_house_room is not null),
