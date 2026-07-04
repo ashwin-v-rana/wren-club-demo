@@ -24,7 +24,7 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 
 ```
 /supabase
-  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id
+  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
 /console             -- Next.js (App Router) + TypeScript + Tailwind front-desk app
   /app
@@ -124,3 +124,4 @@ Styling: The Wren-adjacent, Art Deco restraint — dark green (#1a3a32-ish), bra
 - **Why does the console call the same functions as the agents?** The symmetry is part of the pitch: one deterministic contract, two clients (AI agents + staff console), zero drift.
 - **Why offsets instead of dates?** Demos are re-run weeks apart; `reset_demo()` the morning-of makes the data fresh forever.
 - **Where are the Talkdesk agents built?** Outside this repo. Author each agent's *instruction text* in a chat model (grounding it in this repo's frozen §8 function contract keeps skill bindings and templates from drifting — this Claude Code session, which holds the contract + the restaurant-build reference, is a good authoring surface); then *assemble and deploy* the runnable agent system (Orchestrator + Action Agents, skill→tool/MCP bindings pointed at this project's ref, export/import JSON) in Talkdesk. Measure every prompt with `printf '%s' "$TEXT" | wc -c` against the ~12–14k ceiling. Agents reach the DB only through the same SQL functions the console uses — one contract, two clients.
+- **Reference-first for shared agent mechanics — diff, don't rewrite.** The restaurant build (`hospitality_restaurants`, at `/Users/ashwinrana/hospitality_restaurants/`) is the **authoritative baseline** for anything the two agents share: auth, OTP, phone handling/normalization, send-skill sender split, the `sql_query`/`execute_sql` convention, context set/get, and the orchestrator guardrails. Start from the restaurant agent **near-verbatim** and change only what a hotel-specific requirement demands, shown as an explicit diff (kept / changed / why). Do NOT re-author from first principles or "improve" wording that isn't broken — that silently drops hard-won details (E.164 normalization, OTP whitespace stripping, anti-narration guards) and forces rediscovering them as bugs. Spend creativity on the genuinely new parts (channel-aware entitlement, the data model).

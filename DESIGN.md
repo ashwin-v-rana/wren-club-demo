@@ -392,6 +392,20 @@ create table outbound_messages (
   body              text not null,
   sent_at           timestamptz not null default now()
 );
+
+-- 8.14 auth_events  (authentication audit log; mirrors the restaurant build)
+--   profile_id is plain text with NO foreign key — a log must never block
+--   reset_demo's profile deletes; channel is captured because auth is channel-aware.
+--   Append-only; not cleared by reset_demo. Written only via log_auth_event().
+create table auth_events (
+  auth_event_id     uuid primary key default gen_random_uuid(),
+  hotel_id          text not null default 'WRENLON',
+  profile_id        text,                        -- null when no profile matched
+  channel           text,                        -- Channel Name at auth time (VOICE/CHAT/WHATSAPP/…)
+  event_type        text not null,               -- 'auth_success' | 'auth_failed' | 'phone_identified'
+  result            text not null check (result in ('success','failure')),
+  created_at        timestamptz not null default now()
+);
 ```
 
 ### SQL functions (implement exactly; SECURITY DEFINER; all return JSON)
@@ -415,6 +429,7 @@ create table outbound_messages (
 | `get_activity_availability(p_activity_type_code text, p_date date)` | open slots |
 | `post_activity_booking(p_profile_id, p_slot_id)` | atomic slot claim; links reservation_id if in-house |
 | `get_activity_history(p_profile_id text)` | past `Completed` bookings — powers re-book suggestion; empty result ⇒ agent makes no suggestion |
+| `log_auth_event(p_profile_id, p_channel, p_event_type, p_result)` | append a row to `auth_events` (authentication audit log). Called by the Auth Agent via execute_sql at each verification outcome: `phone_identified`/success (WhatsApp Tier 1), `auth_success`/success (OTP MATCH), `auth_failed`/failure (OTP NO_MATCH or no-match; empty profile_id → null) |
 | `reset_demo()` | truncate transactional rows; reseed to canonical state (below) |
 | `advance_demo(p_step text)` | scripted state flips, e.g. `'complete_blanket_request'` (→ Completed + completion_date), `'check_in_thompson'`, `'expire_offers'` |
 
