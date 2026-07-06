@@ -24,7 +24,7 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 
 ```
 /supabase
-  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events, 09_fix_upgrade_greeting
+  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events, 09_fix_upgrade_greeting, 10_cancel_activity_booking
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
 /talkdesk            -- deployed agent instructions (one .md per agent; ASCII-only; published as system version 2)
   orchestrator.md          -- Wren Concierge (SUPERVISING_AGENT), binary auth, routes-only
@@ -45,7 +45,7 @@ CLAUDE.md
 
 ## Stack & commands
 
-- **Backend:** Supabase (hosted). SQL functions are `SECURITY DEFINER`, return `json`. **Status: built, deployed, and tested** — migrations `01`–`09` are applied to the provisioned project and pass the full test checklist below. Apply migrations with the Supabase CLI (`supabase db push`) or the Supabase MCP `apply_migration`. The project ref + service-role key live in `console/.env.local` (gitignored) and project memory — never commit them.
+- **Backend:** Supabase (hosted). SQL functions are `SECURITY DEFINER`, return `json`. **Status: built, deployed, and tested** — migrations `01`–`09` are applied to the provisioned project and pass the full test checklist below. **Migration `10_cancel_activity_booking` is authored but NOT yet applied** (adds `cancel_activity_booking`; apply it before the Spa agent's cancel flow works). Apply migrations with the Supabase CLI (`supabase db push`) or the Supabase MCP `apply_migration`. The project ref + service-role key live in `console/.env.local` (gitignored) and project memory — never commit them.
 - **Console:** Next.js (App Router) + TypeScript + Tailwind. `@supabase/supabase-js` is used **server-side only**.
 - **Backend-mediated access (hard rule):** the browser NEVER talks to Supabase. All data flows browser → Next.js route handlers / server actions → Supabase with the service-role key. No Supabase URL or key may appear in client-delivered code — therefore no `NEXT_PUBLIC_SUPABASE_*` variables at all.
 - Dev: `cd console && npm install && npm run dev`
@@ -99,6 +99,7 @@ The browser cannot subscribe to Supabase Realtime (that would violate the backen
 - `post_service_request('P1002','GENERAL_REQUEST',1,'a pony please')` → Front Desk fallback row, comment preserved
 - `get_activity_history('P1002')` → one Completed DEEP_TISSUE_60 dated last March
 - `post_activity_booking` on Patel's `today+1` 15:00 slot → Booked, slot.booked incremented; booking a full slot → error, unchanged
+- `cancel_activity_booking('P1002', <that booking's id>)` → CANCELLED + that slot's `booked` decremented; second call → ALREADY_CANCELLED (no double release); on the seeded Completed history row → NOT_CANCELLABLE; wrong-owner or bad id → NOT_FOUND (migration 10)
 - `advance_demo('complete_blanket_request')` → request Completed with completion_date set
 - Run `reset_demo()` twice in a row — must be clean both times (idempotent)
 

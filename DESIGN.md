@@ -436,6 +436,7 @@ create table auth_events (
 | `get_activity_availability(p_activity_type_code text, p_date date)` | open slots |
 | `post_activity_booking(p_profile_id, p_slot_id)` | atomic slot claim; links reservation_id if in-house |
 | `get_activity_history(p_profile_id text)` | past `Completed` bookings — powers re-book suggestion; empty result ⇒ agent makes no suggestion |
+| `cancel_activity_booking(p_profile_id text, p_activity_booking_id text)` | spa counterpart to `cancel_reservation` (migration 10): idempotent, guarded transition scoped to the guest's own profile. Only a `Booked` appointment cancels; only a non-Cancelled→Cancelled transition releases the slot (`activity_slots.booked − 1`, so a second call never double-releases); `Completed`/`NoShow` → `NOT_CANCELLABLE`; owner mismatch or missing → `NOT_FOUND`. Returns `CANCELLED` / `ALREADY_CANCELLED` / `NOT_CANCELLABLE` / `NOT_FOUND` |
 | `log_auth_event(p_profile_id, p_channel, p_event_type, p_result)` | append a row to `auth_events` (authentication audit log). Called by the Auth Agent via execute_sql at each verification outcome: `phone_identified`/success (WhatsApp Tier 1), `auth_success`/success (OTP MATCH), `auth_failed`/failure (OTP NO_MATCH or no-match; empty profile_id → null) |
 | `reset_demo()` | truncate transactional rows; reseed to canonical state (below) |
 | `advance_demo(p_step text)` | scripted state flips, e.g. `'complete_blanket_request'` (→ Completed + completion_date), `'check_in_thompson'`, `'expire_offers'` |
