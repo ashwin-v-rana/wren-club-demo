@@ -88,7 +88,7 @@ Consequence for the demo: the signature one-breath club-access moment takes an O
 | 2 | **Room Reservation Agent** | Availability (`get_hotel_availability` shape), quote, create booking (atomic CTE write), lead-time guard, confirmation send | `execute_sql`, `send_email`, `send_sms` = 3 | Step 1.0 clock fetch mandatory |
 | 3 | **Room Update Agent** | Modify dates/room type/party, cancel, **apply accepted upgrade offer** (`accept_upgrade_offer`) | `execute_sql`, `send_email`, `send_sms` = 3 | Step 1.0 clock fetch mandatory; preserves `confirmation_number` across modifications; claim-new-inventory-first CTE |
 | 4 | **Club Access Agent** | Answers access questions via `check_club_access(profile_id, access_date)` → 5 statuses → 5 fixed templates | `execute_sql` = 1 | Tiny by design; date resolution via Step 1.0 clock fetch when customer says "tonight/tomorrow" |
-| 5 | **Spa & Wellness Agent** | Cowshed Spa treatment catalog, availability, booking (`post_activity_booking` shape), personalised re-book from `activity_bookings` history (retrieved, not composed) | `execute_sql`, `send_email`, `send_sms` = 3 | Step 1.0 clock fetch mandatory |
+| 5 | **Spa and Wellness Agent** | Cowshed Spa treatment catalog, availability, booking (`post_activity_booking` shape), personalised re-book from `activity_bookings` history (retrieved, not composed) | `execute_sql`, `send_email`, `send_sms` = 3 | Step 1.0 clock fetch mandatory |
 | 6 | **Guest Services Agent** | Create service requests (catalog-constrained), status inquiry with per-status templates | `execute_sql`, `send_sms` = 2 | Room number from reservation row, never from customer input (confirm-only); requires `CheckedIn` |
 | 7 | **Concierge Agent** | Venue hours, public-vs-members info, membership enquiry handoff, restaurant deflection detail | `execute_sql` = 1 | Keeps general questions out of transactional agents' prompts |
 
@@ -101,7 +101,7 @@ Consequence for the demo: the signature one-breath club-access moment takes an O
 | book/check room availability, rates | Room Reservation Agent |
 | change/cancel room booking; "yes" to an open upgrade offer | Room Update Agent |
 | pool / rooftop / Vault / club space access questions | Club Access Agent |
-| spa / massage / treatment / gym booking | Spa & Wellness Agent |
+| spa / massage / treatment / gym booking | Spa and Wellness Agent |
 | request an item or ask where a request stands | Guest Services Agent |
 | hours, directions, membership info, general | Concierge Agent |
 | dinner/restaurant reservation | **Deflect (fixed line):** "I'll connect you with our restaurant reservations team for Cecconi's and our other venues." |
@@ -212,8 +212,13 @@ Future-proofing: an optional `room_category_access` join point is stubbed (comme
 | Party-size limit | ≤ 4 guests per room; more than 4 → `escalate` `PARTY_OVER_MAX` to human (group / multi-room booking) | Room Reservation, Room Update-modify |
 | Stay-length limit | Continuous stay ≤ 7 nights; more than 7 → `escalate` `STAY_OVER_MAX` | Room Reservation, Room Update-modify |
 | Active-reservation limit | ≤ 5 active reservations (`Reserved`/`CheckedIn`) per profile; 5 or more → `escalate` `RESERVATION_LIMIT` | Room Reservation |
+| Spa same-day notice | A treatment on `today` must be booked ≥ 2h before its slot; Step 1.0 also fetches `earliest_today = (now + interval '2 hours')::time` and today's slots earlier than it are dropped (this also removes already-passed same-day slots that `get_activity_availability` still returns). Future dates unaffected | Spa |
+| Spa per-day limit | ≤ 4 treatments per profile per date; early `count(*)` over `activity_bookings` (`status='Booked'`) for the requested date, checked before availability | Spa |
+| Spa upcoming limit | ≤ 6 upcoming treatments per profile (`status='Booked'`, `booking_date ≥ today`); early `count(*)` read | Spa |
 
 **Booking limits escalate to a human, they don't hard-fail.** The three limits above are business policy: on any hit the agent returns `escalate` with the reason code and a warm handoff line (guest is offered the reservations team, never a dead end). Enforcement is agent-side in v1 (party/stay = arithmetic against Step 1.0 dates; reservation count = an early `count(*)` read); they could later move into `post_reservation` guard clauses for hard determinism. The full catalogue of human-handoff triggers — these plus operational (`SYSTEM_ERROR`, `UNEXPECTED_DB_ERROR`) and out-of-scope (`MODIFY_RESERVATION`, `ADA_ROOM`, `PAYMENT`) reasons — lives in `talkdesk/escalation-reasons.md`; a dedicated Escalation Agent that owns the human transfer is planned (today `escalate` flows to the Orchestrator's warm handoff).
+
+**Spa limits decline politely, they don't escalate.** Unlike the three room limits, the spa guards (same-day 2h notice, ≤ 4/day, ≤ 6 upcoming) are soft: on a hit the Spa and Wellness agent returns `complete` with a courteous decline and an alternative (another day, or confirming existing bookings) — not a human handoff, since slot-hoarding is not a human-transfer matter. Enforcement is agent-side (`count(*)` reads + a time compare against Step 1.0). The per-day and upcoming caps are per **account**, not per person: `activity_bookings` has no attendee field, so a guest booking for a spouse/partner counts against the same profile. The caps (4/day, 6 upcoming) are deliberately sized to accommodate a couples spa day, and same-time bookings are **allowed** — there is intentionally no one-treatment-per-slot block, because the data cannot distinguish "double-booked myself" from "me + my partner."
 
 **OTP is a Talkdesk-workflow concern, not a SQL function (settled from the restaurant build).** `send_one_time_pin` / `send_one_time_pin_UK` generate the code, send it, and return it as `sent_pin`; `verify_otp` compares `entered_pin` against `sent_pin` in-workflow and returns MATCH/NO_MATCH. The secret never touches Postgres for the mechanism to work — which is already the production pattern. This repo therefore builds **no** `request_otp`/`verify_otp` function; `otp_codes` (§8.12) exists solely as a demo-read affordance so staff can surface the code when a test phone can't receive SMS.
 
