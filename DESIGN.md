@@ -211,7 +211,12 @@ Future-proofing: an optional `room_category_access` join point is stubbed (comme
 | Room number integrity | Write target = room from `CheckedIn` reservation row; customer input used for confirmation only | Guest Services |
 | Entitlement | `check_club_access` statuses only, current turn only | Club Access |
 | Personalised suggestions | History row retrieved by SQL, rendered via fixed template; if query returns no row, no suggestion is made | Spa |
-| Destructive-action assent | Explicit in-transcript confirmation before dispatch | Orchestrator |
+| Destructive-action assent | Explicit in-transcript "yes" at the Action Agent's confirmation gate (Room Update A2/C2, Room Reservation Step 4); the Orchestrator routes and relays but never runs its own confirm | Room Reservation, Room Update, Spa |
+| Party-size limit | ≤ 4 guests per room; more than 4 → `escalate` `PARTY_OVER_MAX` to human (group / multi-room booking) | Room Reservation, Room Update-modify |
+| Stay-length limit | Continuous stay ≤ 7 nights; more than 7 → `escalate` `STAY_OVER_MAX` | Room Reservation, Room Update-modify |
+| Active-reservation limit | ≤ 5 active reservations (`Reserved`/`CheckedIn`) per profile; 5 or more → `escalate` `RESERVATION_LIMIT` | Room Reservation |
+
+**Booking limits escalate to a human, they don't hard-fail.** The three limits above are business policy: on any hit the agent returns `escalate` with the reason code and a warm handoff line (guest is offered the reservations team, never a dead end). Enforcement is agent-side in v1 (party/stay = arithmetic against Step 1.0 dates; reservation count = an early `count(*)` read); they could later move into `post_reservation` guard clauses for hard determinism. The full catalogue of human-handoff triggers — these plus operational (`SYSTEM_ERROR`, `UNEXPECTED_DB_ERROR`) and out-of-scope (`MODIFY_RESERVATION`, `ADA_ROOM`, `PAYMENT`) reasons — lives in `talkdesk/escalation-reasons.md`; a dedicated Escalation Agent that owns the human transfer is planned (today `escalate` flows to the Orchestrator's warm handoff).
 
 **OTP is a Talkdesk-workflow concern, not a SQL function (settled from the restaurant build).** `send_one_time_pin` / `send_one_time_pin_UK` generate the code, send it, and return it as `sent_pin`; `verify_otp` compares `entered_pin` against `sent_pin` in-workflow and returns MATCH/NO_MATCH. The secret never touches Postgres for the mechanism to work — which is already the production pattern. This repo therefore builds **no** `request_otp`/`verify_otp` function; `otp_codes` (§8.12) exists solely as a demo-read affordance so staff can surface the code when a test phone can't receive SMS.
 
