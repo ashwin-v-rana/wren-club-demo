@@ -22,7 +22,7 @@ That makes "Can I use the rooftop pool tonight?" a genuinely hard question. The 
 - Cowshed spa booking, including personalised re-booking from real treatment history
 - In-stay service requests ("extra blanket to room 412") created on one channel, status-checked on another
 - Milestone recognition computed live from stay history
-- Voice, Chat, and WhatsApp channels with risk-tiered authentication
+- Voice, Chat, and WhatsApp channels with binary authentication (public questions are open; anything account-specific requires a one-time code)
 
 ## Architecture at a glance
 
@@ -55,8 +55,9 @@ Design principles that run through everything:
 |---|---|
 | `DESIGN.md` | The authoritative spec: agents, entitlement design, full schema, personas, demo script |
 | `CLAUDE.md` | Build instructions for Claude Code (Supabase migrations + console app) |
-| `supabase/` | Schema, functions, and date-relative seed migrations — implemented and tested *(`migrations/01`–`05`, plus `seed-notes.md`)* |
-| `console/` | Next.js front-desk console — reservations, service-request board, demo controls |
+| `supabase/` | Schema, functions, and date-relative seed migrations — implemented and tested *(`migrations/01`–`09`, plus `seed-notes.md`)* |
+| `talkdesk/` | Deployed agent instructions (`orchestrator.md`, `agents/*.md`) + `escalation-reasons.md` — one file per agent, pasted into Talkdesk; published as system version 2 |
+| `console/` | Next.js front-desk console — reservations, service-request board, demo controls *(planned; not yet built)* |
 
 ## Getting started
 

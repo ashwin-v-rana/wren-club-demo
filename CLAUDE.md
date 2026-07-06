@@ -24,9 +24,13 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 
 ```
 /supabase
-  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events
+  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events, 09_fix_upgrade_greeting
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
-/console             -- Next.js (App Router) + TypeScript + Tailwind front-desk app
+/talkdesk            -- deployed agent instructions (one .md per agent; ASCII-only; published as system version 2)
+  orchestrator.md          -- Wren Concierge (SUPERVISING_AGENT), binary auth, routes-only
+  /agents                  -- auth-agent, club-access-agent, room-update-agent, room-reservation-agent (Spa/Guest Services/FAQ pending)
+  escalation-reasons.md    -- registry of human-handoff triggers (3 booking limits + operational reasons)
+/console             -- Next.js (App Router) + TypeScript + Tailwind front-desk app (planned; not yet built)
   /app
     /(views)         -- Reservations, ServiceRequestsBoard, SpaBookings, UpgradeOffers, MessagesLog, Guest360
     /api
@@ -41,7 +45,7 @@ CLAUDE.md
 
 ## Stack & commands
 
-- **Backend:** Supabase (hosted). SQL functions are `SECURITY DEFINER`, return `json`. **Status: built, deployed, and tested** — migrations `01`–`05` are applied to the provisioned `hospitality_hotel_club` project and pass the full test checklist below. Apply migrations with the Supabase CLI (`supabase db push`) or the Supabase MCP `apply_migration`. The project ref + service-role key live in `console/.env.local` (gitignored) and project memory — never commit them.
+- **Backend:** Supabase (hosted). SQL functions are `SECURITY DEFINER`, return `json`. **Status: built, deployed, and tested** — migrations `01`–`09` are applied to the provisioned project and pass the full test checklist below. Apply migrations with the Supabase CLI (`supabase db push`) or the Supabase MCP `apply_migration`. The project ref + service-role key live in `console/.env.local` (gitignored) and project memory — never commit them.
 - **Console:** Next.js (App Router) + TypeScript + Tailwind. `@supabase/supabase-js` is used **server-side only**.
 - **Backend-mediated access (hard rule):** the browser NEVER talks to Supabase. All data flows browser → Next.js route handlers / server actions → Supabase with the service-role key. No Supabase URL or key may appear in client-delivered code — therefore no `NEXT_PUBLIC_SUPABASE_*` variables at all.
 - Dev: `cd console && npm install && npm run dev`
