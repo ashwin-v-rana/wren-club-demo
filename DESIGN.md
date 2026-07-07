@@ -501,7 +501,10 @@ Purpose: the **staff-side view** that makes the invisible visible during demos �
 > and **Customers** (guest `profiles` + a Guest 360 via `get_entitlement_context`).
 > Sessions are bcrypt + `jose` JWT httpOnly cookies; all secrets are server-only.
 > The still-backend-mediated rule holds (browser → route handlers → Supabase,
-> service role). The demo boards below are Phase 2.
+> service role). **Both phases are now built:** Phase 1 (auth admin + guest
+> add/edit/delete via `create/update/delete_guest_profile`, migration 13) and
+> Phase 2 (the demo boards below + the Demo Control Panel, live-polling over the
+> OPERA-shaped routes).
 
 - **Views:** Reservations (filter by status; upgrade flips visible), Service Requests board (columns Open / InProgress / Completed, grouped or badged by department), Spa bookings (day view), Upgrade offers (status), Outbound messages log, Guest 360 (profile + entitlement context + history per persona).
 - **Demo Control Panel:** buttons for `reset_demo()`, each `advance_demo` step, and the two proactive triggers (which insert into `outbound_messages` and call the send workflow where wired).

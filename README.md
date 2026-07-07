@@ -55,9 +55,9 @@ Design principles that run through everything:
 |---|---|
 | `DESIGN.md` | The authoritative spec: agents, entitlement design, full schema, personas, demo script |
 | `CLAUDE.md` | Build instructions for Claude Code (Supabase migrations + console app) |
-| `supabase/` | Schema, functions, and date-relative seed migrations — implemented and tested *(`migrations/01`–`09`, plus `seed-notes.md`)* |
-| `talkdesk/` | Deployed agent instructions (`orchestrator.md`, `agents/*.md`) + `escalation-reasons.md` — one file per agent, pasted into Talkdesk; published as system version 2 |
-| `console/` | Next.js front-desk console — reservations, service-request board, demo controls *(planned; not yet built)* |
+| `supabase/` | Schema, functions, and date-relative seed migrations — implemented and tested *(`migrations/01`–`13`, plus `seed-notes.md`)* |
+| `talkdesk/` | Deployed agent instructions (`orchestrator.md`, `agents/*.md`) + `escalation-reasons.md` — one file per agent, pasted into Talkdesk; six agents built and published |
+| `console/` | Next.js front-desk console — staff auth, guest management, live demo boards, and demo controls *(built: Phase 1 auth admin + Phase 2 boards)* |
 
 ## Getting started
 
@@ -69,7 +69,7 @@ Design principles that run through everything:
 
 ## Status
 
-Active build. The design (schema, functions, personas, demo script) is complete. **The Supabase backend is implemented, deployed, and passes its full test checklist** — availability/booking, date-aware entitlement, upgrade acceptance, service requests, spa, proactive sends, and every failure path. **The Talkdesk agent system is being authored** — Orchestrator, Authentication (channel-aware), and Club Access agents drafted in `talkdesk/`, grounded in the live SQL contract. The Next.js Front-Desk Console is the remaining major piece.
+Active build. The design (schema, functions, personas, demo script) is complete. **The Supabase backend is implemented, deployed, and passes its full test checklist** — availability/booking, date-aware entitlement, upgrade acceptance, service requests, spa, proactive sends, and every failure path (migrations 01–13). **Six Talkdesk agents are built and published** — Orchestrator, Authentication, Club Access, Room Reservation, Room Update, and Spa & Wellness (book + cancel) — grounded in the live SQL contract. **The Front-Desk Console is built** — staff authentication, guest add/edit/delete, the live demo boards (Reservations, Service Requests, Spa, Upgrade offers, Messages), and the Demo Control Panel. Remaining: the Guest Services and Concierge/FAQ agents (pending knowledge-base content).
 
 ---
 

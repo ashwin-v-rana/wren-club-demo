@@ -4,17 +4,20 @@ Staff-facing console for **The Wren Hotel & Members' Club**. Next.js (App Router
 TypeScript. The browser never talks to Supabase directly — all data flows
 **browser → Next.js route handlers → Supabase (service-role, server-only)**.
 
-> **Phase 1** (this build) is the authenticated admin shell, ported from the
-> crestline partner-core pattern at the user's direction:
-> **Login + roles**, **Agents** (console staff management), **Auth & Activity**
-> (the `auth_events` audit log written by the AI Auth Agent), **Customers**
-> (guest `profiles` + a Guest 360), and **admin change-password**.
-> The demo boards (Reservations, Service Requests, Spa, Upgrades, Messages) are
-> Phase 2.
+> **Phase 1 + Phase 2 are both built.**
+> - **Phase 1** (auth admin shell, ported from crestline partner-core at the
+>   user's direction): **Login + roles**, **Agents** (console staff management),
+>   **Auth & Activity** (the `auth_events` log written by the AI Auth Agent),
+>   **Customers** (guest `profiles` + Guest 360, with **add/edit/delete**), and
+>   **admin change-password**.
+> - **Phase 2** (demo boards + Demo Control Panel): Reservations, Service
+>   Requests board, Spa, Upgrade offers, Outbound messages — all live-polling
+>   (no refresh button) over OPERA-shaped `/api/opera/...` routes.
 >
-> Note: this adds console auth, which **departs from DESIGN §11's original
-> "no console auth in v1"** — a deliberate, user-directed change (see the repo
-> DESIGN.md §11 note and migration `11_console_agents.sql`).
+> Note: console auth **departs from DESIGN §11's original "no console auth in
+> v1"** — a deliberate, user-directed change (see DESIGN.md §11 and migration
+> `11_console_agents.sql`). Customer add/edit/delete writes go through SQL
+> functions (migration `13_guest_profile_crud`), per hard rule #4.
 
 ## Prerequisites
 
@@ -57,15 +60,22 @@ npm run admin:set-password <email> <new-password>
 |---|---|
 | `/login`, `/change-password` | Staff auth (bcrypt + `jose` JWT cookie), forced first-login reset |
 | `/` | Overview — guest + activity snapshot |
-| `/customers`, `/customers/[id]` | Guests (`profiles`) + Guest 360 via `get_entitlement_context` |
+| `/customers`, `/customers/[id]` | Guests (`profiles`) + Guest 360 via `get_entitlement_context`; **add / edit / delete** (via `create/update/delete_guest_profile`) |
 | `/activity` | Auth & Activity — the `auth_events` log (auto-refreshing) |
 | `/admin/agents` | Console staff management (admin-only): create, role, activate, reset-password, delete |
+| `/reservations` | Reservations board (status filter; upgrade flips room type) |
+| `/service-requests` | Service Requests board — Open / In Progress / Completed (the live beat) |
+| `/spa` | Spa bookings (day view) |
+| `/upgrades` | Upgrade offers (from → to, status) |
+| `/messages` | Outbound messages log (proactive sends) |
+
+The demo boards poll every 3s (no refresh button). The always-visible **Demo
+Control Panel** runs `reset_demo`, the `advance_demo` steps, and the two
+proactive-send jobs — all through the SQL functions.
 
 All data access is server-side (`lib/supabase-server.ts`, service role). Page
 access is gated by `middleware.ts`; admin APIs by `requireAdmin`.
 
-## Not yet built (Phase 2)
+## Optional polish (not built)
 
-Reservations board, Service Requests board (the live "request appears during a
-call" beat), Spa bookings, Upgrade offers, Outbound messages log, and the Demo
-Control Panel — all over the OPERA-shaped `/api/opera/...` routes.
+SSE live updates (currently 3s polling), and a Spa day-picker.
