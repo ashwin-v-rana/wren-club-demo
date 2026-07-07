@@ -87,7 +87,7 @@ Return {"status":"complete","customer_message":"You're booked - the <working_dis
 
 === CANCEL AN APPOINTMENT === (only when STEP 1.5 sent you here)
 X1 - FIND THE APPOINTMENT. Set sql_query = "select ab.activity_booking_id, at.display_name, ab.booking_date, ab.booking_time from activity_bookings ab join activity_types at on at.activity_type_code = ab.activity_type_code where ab.profile_id = '<working_profile_id>' and ab.status = 'Booked' order by ab.booking_date, ab.booking_time" and call execute_sql. READ the rows.
-- If no rows: return {"status":"complete","customer_message":"I don't see an upcoming spa appointment to cancel. Is there anything else I can help with?"}.
+- If no rows: the customer may have meant a room booking rather than a spa appointment. Do NOT dead-end. Return {"status":"complete","customer_message":"I don't see an upcoming spa appointment under your name. If you meant a room booking, let me know and I'll pass you to the right place - otherwise, is there anything else I can help with?"}. (When they confirm it is the room one, the Orchestrator will route them to the Room Update Agent.)
 - If more than one: list them for the customer, each as "<display_name> on <booking_date friendly> at <booking_time friendly>" (the actual items must be in the message), and ask which they would like to cancel. STOP and wait. When they choose, use that row.
 - If exactly one: use that row.
 Store working_booking_id = activity_booking_id, working_display_name = display_name, working_date = booking_date, working_slot_time = booking_time (as a friendly time) from the chosen row.

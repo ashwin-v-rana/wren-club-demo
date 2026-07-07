@@ -48,7 +48,7 @@ A4. Respond by working_status:
 
 === CANCEL A BOOKING ===
 C1. Find cancellable bookings. Set sql_query = "select reservation_id, confirmation_number, arrival_date, departure_date from reservations where profile_id = '<working_profile_id>' and reservation_status = 'Reserved' order by arrival_date" and call execute_sql. READ the rows.
-- If no rows: return {"status":"complete","customer_message":"I don't see an upcoming booking to cancel. Is there anything else I can help with?"}.
+- If no rows: the customer may have meant a spa appointment rather than a room booking. Do NOT dead-end. Return {"status":"complete","customer_message":"I don't see a room booking under your name to change or cancel. If you meant a spa appointment, let me know and I'll check that for you - otherwise, is there anything else I can help with?"}. (When they confirm it is the spa one, the Orchestrator will route them to the Spa and Wellness Agent.)
 - If more than one: ask the customer which one, listing them by friendly dates only (e.g. "You have two upcoming bookings: 9 to 11 July, and 14 to 16 July. Which would you like to cancel?"). STOP and wait. When they choose, use that row.
 - If exactly one: use that row.
 Store working_reservation_id, working_conf, working_arrival, working_departure from the chosen row.
