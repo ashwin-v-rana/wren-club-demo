@@ -67,6 +67,15 @@ Design principles that run through everything:
 4. `cd console && npm install && npm run dev` (env vars documented in `CLAUDE.md`).
 5. Wire the SQL functions as skills in your Talkdesk AI Agent environment per `DESIGN.md` §4–§7. Author each agent's instructions in a chat model (grounded in the function contract so skill bindings don't drift), then assemble and deploy the agent system in Talkdesk itself.
 
+## Deployment
+
+The Front-Desk Console runs on **Vercel** (Next.js, Node serverless): **https://wren-front-desk-console.vercel.app**
+
+- The Vercel project's **Root Directory** is `console/`; framework auto-detected as Next.js.
+- Server-only env vars (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `BCRYPT_ROUNDS`) are set in the Vercel project — there are deliberately **no `NEXT_PUBLIC_*` vars** (the browser never talks to Supabase).
+- The repo is git-connected: **pushes to `main` auto-deploy to production**; pull requests get preview URLs.
+- Staff sign-in reads the `agents` table in the same hosted Supabase, so accounts are shared across local and production.
+
 ## Status
 
 Active build. The design (schema, functions, personas, demo script) is complete. **The Supabase backend is implemented, deployed, and passes its full test checklist** — availability/booking, date-aware entitlement, upgrade acceptance, service requests, spa, proactive sends, and every failure path (migrations 01–13). **Six Talkdesk agents are built and published** — Orchestrator, Authentication, Club Access, Room Reservation, Room Update, and Spa & Wellness (book + cancel) — grounded in the live SQL contract. **The Front-Desk Console is built** — staff authentication, guest add/edit/delete, the live demo boards (Reservations, Service Requests, Spa, Upgrade offers, Messages), and the Demo Control Panel. Remaining: the Guest Services and Concierge/FAQ agents (pending knowledge-base content).
