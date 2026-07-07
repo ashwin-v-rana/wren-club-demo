@@ -78,6 +78,11 @@ export type Reservation = {
   reservation_status: "Reserved" | "CheckedIn" | "CheckedOut" | "Cancelled" | "NoShow";
 };
 
+export type RoomType = {
+  room_type_code: string;
+  display_name: string;
+};
+
 export type ServiceRequest = {
   service_request_id: string;
   code: string;
