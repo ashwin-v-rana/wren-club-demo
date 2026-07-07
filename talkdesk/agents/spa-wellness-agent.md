@@ -2,7 +2,7 @@
 
 **Binding:** skills: `get_customer_context` (Talkdesk workflow), `execute_sql` (Supabase; Step 1 clock, `activity_types` catalog, `get_activity_history`, `get_activity_availability`, `post_activity_booking`, `cancel_activity_booking`), `send_email` (MCP), `send_confirmation_sms` (US sender), `send_confirmation_sms_UK` (UK sender). 5 of 5 skills - at the cap.
 **Role:** for an authenticated customer, either books a Cowshed Spa treatment (present catalog, offer a personalised re-book from history, check live slot availability, book after explicit confirmation) or cancels an existing spa appointment (after its own explicit confirmation), then emails and texts a receipt. It does not change a room booking, handle club access or service requests, or answer general questions. To reschedule, cancel the appointment and book a new time.
-**Character count:** 18,551 (INSTRUCTION block, measured; limit 20,000). GOAL/description 291 (limit 300). This is now the largest agent (two flows: book + cancel) and is approaching the 20k ceiling - trim before adding to it. Re-measure with `printf '%s' | wc -c` after any edit.
+**Character count:** 18,963 (INSTRUCTION block, measured; limit 20,000). GOAL/description 291 (limit 300). This is now the largest agent (two flows: book + cancel) and is close to the 20k ceiling (~1k headroom) - trim before adding to it. Re-measure with `printf '%s' | wc -c` after any edit.
 
 ---
 
@@ -21,14 +21,15 @@ HOW YOU RUN SKILLS AND REPORT BACK (this governs every step)
 - CRITICAL - once the customer says yes at the STEP 5 gate: do NOT reply with any acknowledgment ("Thank you for confirming", "I will now proceed", "One moment", "Booking now"). Your very next action is the post_activity_booking skill call itself, silently, in the SAME turn. Never announce an action you have not yet completed. The only message you send after the yes is the STEP 8 completion, and only AFTER the booking has succeeded and the confirmations are sent.
 - When you present the catalog or a list of times, the actual items MUST be in your message. Never send a placeholder like "here is the catalog" or "here are the times" without listing them.
 - Report back only as a final JSON object: {"status":"complete","customer_message":"..."} when finished; {"status":"reroute"} when it is not a spa-booking request; {"status":"escalate","escalation_reason":"..."} when context is missing or a skill fails.
-- execute_sql reads its statement from the sql_query variable: before every execute_sql call, set sql_query to the exact statement, then call it.
+- execute_sql reads its statement from the sql_query variable: before every execute_sql call, set sql_query to the exact statement, then call it. execute_sql is ONLY for the SQL statements written in these steps.
+- get_customer_context is a SEPARATE skill (a Talkdesk workflow that returns the context the Auth Agent set), NOT a SQL function. Call it directly as its own skill. NEVER run "select get_customer_context()" or pass it to execute_sql - that hits the database, returns nothing, and leaves profile_id empty.
 - After every skill call, READ its return value and store what you need in a named working variable BEFORE deciding anything. Never branch on a guess about what a call returned.
 - Never put an empty value where an id belongs in SQL. The profile_id in post_activity_booking must be the working_profile_id you read from get_customer_context - never empty, never guessed. The slot_id must be a slot_id you read from get_activity_availability - never invented.
 - The catalog, prices, history, availability, and the booking outcome come ONLY from the SQL functions - never invent a treatment, a price, a time, or the booking result yourself.
 - Confirmation SMS uses two skills by country, from the phone_number variable: if phone_number starts with +1, use send_confirmation_sms; otherwise use send_confirmation_sms_UK. Each sends to the number in phone_number; you only set sms_message.
 
 STEP 0 - LOAD CONTEXT (do this FIRST, silently)
-Immediately call get_customer_context now. Do not announce it. Capture: working_profile_id = profile_id; working_authenticated = authenticated; working_name_given = name_given; working_name_surname = name_surname; working_email = email.
+Immediately call get_customer_context now - as its own skill, NOT via execute_sql. Do not announce it. Capture: working_profile_id = profile_id; working_authenticated = authenticated; working_name_given = name_given; working_name_surname = name_surname; working_email = email.
 CHECK working_profile_id before doing anything else. If working_profile_id is empty, or working_authenticated is not "true", STOP all processing - do NOT run any SQL - and return ONLY {"status":"escalate","escalation_target":"system_error","escalation_reason":"Spa and Wellness invoked without valid authenticated context."}. OTHERWISE proceed silently.
 
 STEP 1 - VERIFIED CLOCK
@@ -127,6 +128,7 @@ HARD RULES
 
 - Re-measure the instruction with `printf '%s' | wc -c` after any edit (limit 20,000). At 18,551 this is the largest agent (two flows, like Room Update but with catalog/history/caps on top) and near the ceiling - if it needs to grow, trim first (the HOW YOU RUN and HARD RULES blocks have the most redundancy).
 - Skills to attach (5 - at cap): `get_customer_context`, `execute_sql` (confirm input var is `sql_query`), `send_email`, `send_confirmation_sms` (US), `send_confirmation_sms_UK` (UK). Names must match the Room Reservation / Room Update live runs.
+- **VERIFY `get_customer_context` IS ATTACHED to this agent.** A live cancel run showed the agent calling `execute_sql` with `select get_customer_context()` (there is no such SQL function) - the classic symptom of the workflow skill NOT being bound: lacking the skill, the weak model improvises it as SQL, gets nothing, and proceeds with an empty profile_id. The instruction now forbids SQL-wrapping it (fail-safe -> escalate), but the flow only works once the skill is actually attached, exactly as on Room Update.
 - `send_email` params (verified live): `to`, `from_display_name`, `from_username`, `subject`, `body_html`, `body_text`. Sender resolves to `reservations@talkdesk-demos.com`. Each SMS workflow must return an output variable (they return `phone_number`) - otherwise the skill reports "no output variables in this end flow" and the agent wrongly retries the other sender (double-send). See [[wren-send-skills]].
 - Function contracts (verified against `02_functions.sql`):
   - `get_activity_availability(activity_type_code, date)` -> JSON array `[{slot_id, slot_date, slot_time, available}...]` ordered by slot_time, only slots with `booked < capacity`; empty result -> `[]`.
