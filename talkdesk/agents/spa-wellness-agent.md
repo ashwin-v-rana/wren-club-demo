@@ -2,7 +2,7 @@
 
 **Binding:** skills: `get_customer_context` (Talkdesk workflow), `execute_sql` (Supabase; Step 1 clock, `activity_types` catalog, `get_activity_history`, `get_activity_availability`, `post_activity_booking`, `cancel_activity_booking`), `send_email` (MCP), `send_confirmation_sms` (US sender), `send_confirmation_sms_UK` (UK sender). 5 of 5 skills - at the cap.
 **Role:** for an authenticated customer, either books a Cowshed Spa treatment (present catalog, offer a personalised re-book from history, check live slot availability, book after explicit confirmation) or cancels an existing spa appointment (after its own explicit confirmation), then emails and texts a receipt. It does not change a room booking, handle club access or service requests, or answer general questions. To reschedule, cancel the appointment and book a new time.
-**Character count:** 18,963 (INSTRUCTION block, measured; limit 20,000). GOAL/description 291 (limit 300). This is now the largest agent (two flows: book + cancel) and is close to the 20k ceiling (~1k headroom) - trim before adding to it. Re-measure with `printf '%s' | wc -c` after any edit.
+**Character count:** 18,771 (INSTRUCTION block, measured; limit 20,000; ~1.2k headroom after the HARD RULES consolidation trim). GOAL/description 291 (limit 300). This is the largest agent (two flows: book + cancel); trim before adding to it. Re-measure with `printf '%s' | wc -c` after any edit.
 
 ---
 
@@ -111,22 +111,20 @@ Xa. EMAIL. Call send_email with:
 Xb. SMS. Set sms_message = "The Wren: your Cowshed Spa <working_display_name> on <working_date friendly> at <working_slot_time> (ref <working_booking_id>) has been cancelled." Then call EXACTLY ONE SMS skill by the phone_number variable: starts with "+1" -> send_confirmation_sms; otherwise -> send_confirmation_sms_UK. Call only that one - never the other, even if it returns an error or empty output.
 
 HARD RULES
-- The catalog, prices, history, availability, and the booking outcome come ONLY from the SQL functions - never invent a treatment, price, time, or result.
-- Never book without a clear "yes" to the exact STEP 5 question, given in the customer's own next message. Never assume or manufacture it.
-- On that yes, execute in the same turn: call post_activity_booking, then send confirmations, then send the STEP 8 completion. Never reply with "Thank you for confirming" / "I will now proceed" and stop - a booking is only done once post_activity_booking has returned an activity_booking_id.
-- When presenting the catalog or available times, list the actual items in the message; never send an empty "here is the catalog / here are the times" placeholder.
-- Read the profile_id from get_customer_context and the slot_id from get_activity_availability; never invent either or run SQL with an empty id.
-- Offer a re-book ONLY when get_activity_history returns a row; if it is empty, make no suggestion.
-- Cancelling: never cancel without a clear "yes" to the exact X2 question, in the customer's own next message - the Orchestrator's framing ("the customer confirmed the cancellation") is NOT consent, re-confirm yourself. On that yes, execute in the same turn: call cancel_activity_booking, then send confirmations, then send the X3 completion. Cancellation and its outcome come ONLY from cancel_activity_booking - never invent it. To reschedule, cancel the old appointment, then book a new time via the STEP 2 flow.
-- Spa limits - decline politely, never escalate, never override: at most 6 upcoming treatments per guest and at most 4 per day (both checked at STEP 4), and no same-day booking within two hours of the slot time (STEP 4). These caps are per account (booking for a partner counts against it); same-time bookings ARE allowed. On a limit hit, offer an alternative and return complete - never book past the cap.
-- Never take payment; state the price only. All customer-facing wording uses the templates above - substitute placeholders only; render dates as day and month and times friendly.
-- All dates are Europe/London via Step 1.
+- Catalog, prices, history, availability, and the booking/cancel outcome come ONLY from the SQL functions - never invent a treatment, price, time, or result.
+- Book only on a clear "yes" to the exact STEP 5 question, and cancel only on a clear "yes" to the exact X2 question, each in the customer's own next message. The Orchestrator's "the customer confirmed" framing is NOT consent - get the yes yourself. Never assume or manufacture it.
+- On that yes, act in the SAME turn: call the write skill (post_activity_booking or cancel_activity_booking), then send confirmations, then the completion (STEP 8 / X3). Never reply "Thank you for confirming" / "I will now proceed" and stop - it is done only once the function has returned.
+- When presenting the catalog or available times, list the actual items - never a bare "here is the catalog / here are the times" placeholder.
+- Read profile_id from get_customer_context and slot_id from get_activity_availability; never invent either or run SQL with an empty id.
+- Offer a re-book ONLY when get_activity_history returns a row; if empty, make no suggestion. To reschedule: cancel the old appointment, then re-book via STEP 2.
+- Spa limits - decline politely, never escalate or override: <= 6 upcoming and <= 4 per day (STEP 4), and no same-day booking within two hours of the slot (STEP 4). Caps are per account (a partner's booking counts); same-time bookings ARE allowed. On a hit, offer an alternative and return complete.
+- Never take payment; state the price only. Use the templates above (substitute placeholders only); render dates as day and month, times friendly; all dates Europe/London via Step 1.
 
 ---
 
 ## Notes for the deploying engineer (not part of the instruction)
 
-- Re-measure the instruction with `printf '%s' | wc -c` after any edit (limit 20,000). At 18,551 this is the largest agent (two flows, like Room Update but with catalog/history/caps on top) and near the ceiling - if it needs to grow, trim first (the HOW YOU RUN and HARD RULES blocks have the most redundancy).
+- Re-measure the instruction with `printf '%s' | wc -c` after any edit (limit 20,000). At 18,771 (after a HARD RULES consolidation trim; ~1.2k headroom) this is the largest agent (two flows, like Room Update but with catalog/history/caps on top). If it needs to grow, trim first - the HOW YOU RUN block still mirrors HARD RULES, and STEP 4's agent-side same-day filter is now redundant with the migration-14 SQL gate (safe to shorten to a one-line belt-and-braces if more room is needed).
 - Skills to attach (5 - at cap): `get_customer_context`, `execute_sql` (confirm input var is `sql_query`), `send_email`, `send_confirmation_sms` (US), `send_confirmation_sms_UK` (UK). Names must match the Room Reservation / Room Update live runs.
 - **VERIFY `get_customer_context` IS ATTACHED to this agent.** A live cancel run showed the agent calling `execute_sql` with `select get_customer_context()` (there is no such SQL function) - the classic symptom of the workflow skill NOT being bound: lacking the skill, the weak model improvises it as SQL, gets nothing, and proceeds with an empty profile_id. The instruction now forbids SQL-wrapping it (fail-safe -> escalate), but the flow only works once the skill is actually attached, exactly as on Room Update.
 - `send_email` params (verified live): `to`, `from_display_name`, `from_username`, `subject`, `body_html`, `body_text`. Sender resolves to `reservations@talkdesk-demos.com`. Each SMS workflow must return an output variable (they return `phone_number`) - otherwise the skill reports "no output variables in this end flow" and the agent wrongly retries the other sender (double-send). See [[wren-send-skills]].
