@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +20,9 @@ export default function LoginPage() {
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       if (res.ok) {
-        router.push("/");
-        router.refresh();
+        // Hard navigation so middleware re-evaluates with the fresh session
+        // cookie (a forced-change account will be routed to /change-password).
+        window.location.replace("/");
       } else {
         const body = await res.json().catch(() => ({}));
         setError(body.error ?? "Login failed");

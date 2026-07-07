@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LogOut, KeyRound } from "lucide-react";
 import { useSessionAgent } from "@/hooks/useSessionAgent";
@@ -14,15 +14,13 @@ const TITLES: Record<string, string> = {
 
 export function TopBar() {
   const pathname = usePathname() ?? "/";
-  const router = useRouter();
   const { agent } = useSessionAgent();
 
   const title = /^\/customers\/[^/]+$/.test(pathname) ? "Guest 360" : TITLES[pathname] ?? "The Wren";
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
+    window.location.replace("/login");
   }
 
   return (

@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowRight, ShieldAlert, Lock } from "lucide-react";
 import type { SessionAgent } from "@/lib/types";
 import { Field, ErrorBox } from "../login/page";
 
 export default function ChangePasswordPage() {
-  const router = useRouter();
   const [agent, setAgent] = useState<SessionAgent | null>(null);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -33,8 +31,9 @@ export default function ChangePasswordPage() {
         body: JSON.stringify({ current_password: current, new_password: next }),
       });
       if (res.ok) {
-        router.push("/");
-        router.refresh();
+        // Hard navigation: the session cookie just changed, so force a fresh
+        // server round-trip (avoids a stale RSC cache + middleware redirect loop).
+        window.location.replace("/");
       } else {
         const body = await res.json().catch(() => ({}));
         setError(body.error ?? "Could not change password");
