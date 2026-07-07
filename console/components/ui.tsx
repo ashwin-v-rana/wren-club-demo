@@ -39,6 +39,17 @@ export function Empty({ children }: { children: ReactNode }) {
   return <div style={{ padding: "36px 20px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>{children}</div>;
 }
 
+const STATUS_TONE: Record<string, "neutral" | "brass" | "green" | "danger"> = {
+  Reserved: "brass", CheckedIn: "green", CheckedOut: "neutral", Cancelled: "danger", NoShow: "danger",
+  Open: "brass", InProgress: "brass", Completed: "green",
+  Offered: "brass", Accepted: "green", Declined: "neutral", Expired: "danger",
+  Booked: "green",
+};
+
+export function StatusPill({ status }: { status: string }) {
+  return <Pill tone={STATUS_TONE[status] ?? "neutral"}>{status}</Pill>;
+}
+
 export const th: React.CSSProperties = {
   textAlign: "left",
   padding: "11px 20px",

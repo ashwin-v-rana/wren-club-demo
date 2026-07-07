@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, ShieldCheck, UserCog } from "lucide-react";
+import { LayoutDashboard, BedDouble, ConciergeBell, Sparkles, ArrowUpCircle, MessageSquare, Users, ShieldCheck, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSessionAgent } from "@/hooks/useSessionAgent";
 
 type Item = { to: string; icon: LucideIcon; label: string; adminOnly?: boolean };
 const ITEMS: Item[] = [
   { to: "/", icon: LayoutDashboard, label: "Overview" },
+  { to: "/reservations", icon: BedDouble, label: "Reservations" },
+  { to: "/service-requests", icon: ConciergeBell, label: "Service Requests" },
+  { to: "/spa", icon: Sparkles, label: "Spa" },
+  { to: "/upgrades", icon: ArrowUpCircle, label: "Upgrade Offers" },
+  { to: "/messages", icon: MessageSquare, label: "Messages" },
   { to: "/customers", icon: Users, label: "Customers" },
   { to: "/activity", icon: ShieldCheck, label: "Auth & Activity" },
   { to: "/admin/agents", icon: UserCog, label: "Agents", adminOnly: true },

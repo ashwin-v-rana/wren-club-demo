@@ -7,6 +7,11 @@ import { useSessionAgent } from "@/hooks/useSessionAgent";
 
 const TITLES: Record<string, string> = {
   "/": "Overview",
+  "/reservations": "Reservations",
+  "/service-requests": "Service Requests",
+  "/spa": "Spa",
+  "/upgrades": "Upgrade Offers",
+  "/messages": "Outbound Messages",
   "/customers": "Customers",
   "/activity": "Auth & Activity",
   "/admin/agents": "Agents",
