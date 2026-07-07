@@ -24,7 +24,7 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 
 ```
 /supabase
-  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events, 09_fix_upgrade_greeting, 10_cancel_activity_booking
+  /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events, 09_fix_upgrade_greeting, 10_cancel_activity_booking, 11_console_agents
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
 /talkdesk            -- deployed agent instructions (one .md per agent; ASCII-only; published as system version 2)
   orchestrator.md          -- Wren Concierge (SUPERVISING_AGENT), binary auth, routes-only
@@ -50,7 +50,7 @@ CLAUDE.md
 - **Backend-mediated access (hard rule):** the browser NEVER talks to Supabase. All data flows browser → Next.js route handlers / server actions → Supabase with the service-role key. No Supabase URL or key may appear in client-delivered code — therefore no `NEXT_PUBLIC_SUPABASE_*` variables at all.
 - Dev: `cd console && npm install && npm run dev`
 - Env (console/.env.local, server-only): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-- Because access is service-role via the backend, enable RLS on all tables with no anon policies (belt-and-braces: even a leaked anon key reads nothing). Do not build user auth for the console in v1.
+- Because access is service-role via the backend, enable RLS on all tables with no anon policies (belt-and-braces: even a leaked anon key reads nothing). **Console auth (UPDATED, user-directed):** the console v1 now DOES have staff authentication (login + roles csr/supervisor/admin + change-password), ported from the crestline partner-core pattern — this supersedes the earlier "no console auth in v1" rule. Staff accounts live in the `agents` table (migration 11); sessions are bcrypt + `jose` JWT httpOnly cookies; secrets (`JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`) are server-only in `console/.env.local`.
 
 ## API surface (route handlers)
 
@@ -118,7 +118,7 @@ Styling: The Wren-adjacent, Art Deco restraint — dark green (#1a3a32-ish), bra
 - Do not add tables, columns, enums, or functions beyond DESIGN.md without asking.
 - Do not implement OPERA's actual REST payload schemas — naming + field vocabulary fidelity only.
 - Do not build restaurant reservation features (explicitly out of scope; separate system).
-- Do not add authentication/roles to the console, schedulers/cron for proactive jobs (manually triggered by design), or per-channel template variants.
+- Do not add schedulers/cron for proactive jobs (manually triggered by design) or per-channel template variants. (Console authentication/roles WAS added in Phase 1 at the user's direction — see the console-auth note above; this reverses the original "no console auth" rule.)
 - Do not "fix" the phonetic-safe alphabet or shorten confirmation numbers.
 - Do not compute entitlement, availability, or ETAs in TypeScript.
 

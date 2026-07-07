@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   The Wren — Front Desk Console theme.
+   Art Deco restraint: deep pine green, brass/gold accents, cream ground,
+   elegant serif for display. Var names mirror the crestline port so the
+   ported components resolve, but every value is Wren's.
+   ========================================================================== */
+
+:root {
+  --pine: #1a3a32;
+  --pine-deep: #122a24;
+  --pine-soft: #24463d;
+
+  --brass: #b08d57;
+  --brass-hi: #c9a86a;
+  --brass-deep: #8a6d3f;
+
+  --cream: #f4ecdd;
+  --cream-2: #fbf6ec;
+
+  --ink: #1e2a25;
+  --muted: #5f6f66;
+
+  --surface: #fbf7ee;
+  --surface-2: #efe7d5;
+
+  --text: #26312c;
+  --text-dim: #6b7a72;
+  --text-muted: #94a199;
+
+  --border: rgba(26, 58, 50, 0.14);
+  --border-2: rgba(26, 58, 50, 0.24);
+
+  --accent: var(--brass);
+  --accent-deep: var(--brass-deep);
+
+  --danger: #a5402b;
+  --ok: var(--pine);
+
+  --font-display: "Cormorant Garamond", "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(1100px 600px at 15% -10%, rgba(176, 141, 87, 0.10), transparent 60%),
+    var(--cream);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+/* Surface card — the workhorse container. */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(26, 58, 50, 0.04), 0 12px 30px rgba(26, 58, 50, 0.06);
+}
+
+/* Eyebrow / section label. */
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+/* Primary brass button. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, var(--brass), var(--brass-hi));
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(176, 141, 87, 0.28);
+  transition: filter 150ms, box-shadow 150ms;
+}
+.btn:hover { filter: brightness(1.05); }
+.btn:disabled { background: var(--surface-2); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border-2);
+  box-shadow: none;
+}
+.btn-ghost:hover { color: var(--accent-deep); border-color: var(--accent); filter: none; }
+
+/* Inputs. */
+.input {
+  width: 100%;
+  background: var(--cream-2);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+}
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(176, 141, 87, 0.16); }
+
+.mono { font-family: var(--font-mono); }
+
+/* Status pill. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--border-2);
+  background: var(--cream-2);
+  color: var(--text-dim);
+}
+
+table { border-collapse: collapse; width: 100%; }

@@ -492,6 +492,17 @@ create table auth_events (
 
 Purpose: the **staff-side view** that makes the invisible visible during demos — the audience watches data change in real time as the AI acts.
 
+> **v1.2 deviation (user-directed): the console now has staff authentication.**
+> The original v1 rule ("no console auth") is superseded. Phase 1 of the console
+> is an authenticated admin shell ported from the crestline partner-core pattern:
+> staff **login + roles** (csr/supervisor/admin), **change-password** (forced on
+> first login), an **Agents** manager (console staff accounts, `agents` table,
+> migration 11), **Auth & Activity** (a view over the existing `auth_events` log),
+> and **Customers** (guest `profiles` + a Guest 360 via `get_entitlement_context`).
+> Sessions are bcrypt + `jose` JWT httpOnly cookies; all secrets are server-only.
+> The still-backend-mediated rule holds (browser → route handlers → Supabase,
+> service role). The demo boards below are Phase 2.
+
 - **Views:** Reservations (filter by status; upgrade flips visible), Service Requests board (columns Open / InProgress / Completed, grouped or badged by department), Spa bookings (day view), Upgrade offers (status), Outbound messages log, Guest 360 (profile + entitlement context + history per persona).
 - **Demo Control Panel:** buttons for `reset_demo()`, each `advance_demo` step, and the two proactive triggers (which insert into `outbound_messages` and call the send workflow where wired).
 - **Architecture rule: the browser never talks to Supabase.** All reads and writes go browser → Next.js backend (route handlers / server actions) → Supabase, using the service-role key server-side only. No Supabase client, keys, or URLs in browser code.
