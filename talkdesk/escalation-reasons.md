@@ -6,7 +6,7 @@ Single source of truth for **when any agent hands the customer to a human**. As 
 {"status":"escalate","escalation_target":"human","escalation_reason":"<CODE>","customer_message":"<handoff line>"}
 ```
 
-The Orchestrator delivers the handoff (its `escalate` handling: deliver `customer_message` verbatim if present, else a default warm line). A dedicated **Escalation Agent** — owning the real human transfer / callback capture — is **planned, not built**; when built it consumes `escalation_reason` from this table. "For now, just track the reasons"; enforcement is wired incrementally.
+The Orchestrator handles `escalate` (and a direct "I want a human" request) via the Talkdesk **Pre-Escalation Agent** pattern: deliver any action-agent `customer_message` verbatim, then route to the **Pre-Escalation Agent** passing a detailed interaction summary + the transfer reason, wait for its `transfer_ready` response, then say "One moment while I transfer you with a human agent." and escalate. The Pre-Escalation Agent stores the summary + reason into the "Interaction summary" and "Transfer reason" Orchestrator variables and runs the **"Load Transfer Data"** skill, which sets **"Transfer Data"** (the payload assigned to the Application Output → Studio's `escalate_to`). Agent instruction: `talkdesk/agents/pre-escalation-agent.md`; Orchestrator wiring: `talkdesk/orchestrator.md`. It consumes `escalation_reason` from this table (and can derive a Transfer Queue from it — see the agent file's optional-upgrade note). The `Load Transfer Data` workflow and Studio parse/config are built in Talkdesk, not this repo.
 
 ## Business-policy limits (escalate to human)
 
