@@ -28,14 +28,13 @@ REPO = Path(__file__).resolve().parents[1]
 
 AGENT_FILE_MAP = {
     "Wren Concierge": REPO / "talkdesk" / "orchestrator.md",
+    "Authentication Agent": REPO / "talkdesk" / "agents" / "auth-agent.md",
     "Club Access Agent": REPO / "talkdesk" / "agents" / "club-access-agent.md",
-    # Add as they are authored:
-    # "Authentication Agent": REPO / "talkdesk" / "agents" / "auth-agent.md",
-    # "Room Reservation Agent": ...
-    # "Room Update Agent": ...
-    # "Spa & Wellness Agent": ...
-    # "Guest Services Agent": ...
-    # "Concierge Agent": ...
+    "Room Reservation Agent": REPO / "talkdesk" / "agents" / "room-reservation-agent.md",
+    "Room Update Agent": REPO / "talkdesk" / "agents" / "room-update-agent.md",
+    "Spa and Wellness Agent": REPO / "talkdesk" / "agents" / "spa-wellness-agent.md",  # no "&" — Talkdesk rejects it in the name
+    "Guest Services Agent": REPO / "talkdesk" / "agents" / "guest-services-agent.md",
+    # "Concierge Agent": REPO / "talkdesk" / "agents" / "concierge-agent.md",  # not yet built (pending venue content)
 }
 
 SECRET_PATTERNS = [

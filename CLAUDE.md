@@ -28,9 +28,9 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
 /talkdesk            -- deployed agent instructions (one .md per agent; ASCII-only; published as system version 2)
   orchestrator.md          -- Wren Concierge (SUPERVISING_AGENT), binary auth, routes-only
-  /agents                  -- auth-agent, club-access-agent, room-update-agent, room-reservation-agent (Spa/Guest Services/FAQ pending)
+  /agents                  -- auth-agent, club-access-agent, room-update-agent, room-reservation-agent, spa-wellness-agent, guest-services-agent (Concierge/FAQ pending)
   escalation-reasons.md    -- registry of human-handoff triggers (3 booking limits + operational reasons)
-/console             -- Next.js (App Router) + TypeScript + Tailwind front-desk app (planned; not yet built)
+/console             -- Next.js (App Router) + TypeScript + Tailwind front-desk app (BUILT + deployed to Vercel with git auto-deploy; staff auth, guest CRUD, actionable demo boards, Demo Control Panel)
   /app
     /(views)         -- Reservations, ServiceRequestsBoard, SpaBookings, UpgradeOffers, MessagesLog, Guest360
     /api
