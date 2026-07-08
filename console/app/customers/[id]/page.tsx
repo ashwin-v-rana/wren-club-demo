@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, CalendarClock, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, Mail, Phone, CalendarClock, Pencil, Trash2, X, Award } from "lucide-react";
 import { StatTile, Panel, Pill, Empty } from "@/components/ui";
 import { fmtDate, initials } from "@/lib/format";
 import type { EntitlementContext } from "@/lib/types";
@@ -15,6 +15,7 @@ export default function Guest360Page() {
   const [ctx, setCtx] = useState<EntitlementContext | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [granting, setGranting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -31,6 +32,16 @@ export default function Guest360Page() {
     const r = await fetch(`/api/customers/${id}`, { method: "DELETE" });
     if (r.ok) { router.push("/customers"); return; }
     setErr((await r.json().catch(() => ({}))).error ?? "Could not delete guest");
+  }
+
+  async function grant() {
+    if (!window.confirm("Grant this guest a Wren Club membership, effective today?")) return;
+    setErr(null);
+    setGranting(true);
+    const r = await fetch(`/api/customers/${id}/membership`, { method: "POST" });
+    setGranting(false);
+    if (r.ok) { load(); return; }
+    setErr((await r.json().catch(() => ({}))).error ?? "Could not grant membership");
   }
 
   if (notFound) return <Empty>Guest not found.</Empty>;
@@ -59,6 +70,11 @@ export default function Guest360Page() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
+          {!ctx.is_member && (
+            <button className="btn-ghost" onClick={grant} disabled={granting} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
+              <Award size={14} /> {granting ? "Granting…" : "Grant membership"}
+            </button>
+          )}
           <button className="btn-ghost" onClick={() => setEditing((v) => !v)} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
             {editing ? <><X size={14} /> Close</> : <><Pencil size={14} /> Edit</>}
           </button>
