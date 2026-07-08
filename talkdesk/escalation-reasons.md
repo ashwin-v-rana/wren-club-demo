@@ -20,7 +20,7 @@ The Orchestrator delivers the handoff (its `escalate` handling: deliver `custome
 
 | Code | Trigger | Detected by | Customer handoff line | Status |
 |---|---|---|---|---|
-| `MODIFY_RESERVATION` | Change dates / room / party of an existing booking (deferred — hardest: party↑→different room, ADA, new dates, or all) | Room Update (future) | "Let me connect you with our reservations team, who can adjust your booking." | planned |
+| `MODIFY_RESERVATION` | Change dates / room / party of an existing booking (deferred — hardest: party↑→different room, ADA, new dates, or all) | Room Update (STEP 1 → MODIFY A BOOKING block) | "Let me connect you with our reservations team, who can adjust your booking." | wired (Room Update escalates; `put_reservation` exists if we later build it in-agent) |
 | `ADA_ROOM` | Accessible-room request (no accessibility attribute in the data model) | Room Reservation / Room Update | "Our reservations team handles accessible-room requests personally. Let me connect you." | planned |
 | `PAYMENT` | Anything requiring payment / deposit (out of scope) | any | "Let me connect you with our team to take care of that for you." | planned |
 
