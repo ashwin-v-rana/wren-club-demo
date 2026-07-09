@@ -60,11 +60,16 @@ function RequestCard({ r }: { r: ServiceRequest }) {
           {r.description}
           {r.quantity > 1 && <span style={{ color: "var(--text-muted)", fontWeight: 500 }}> ×{r.quantity}</span>}
         </div>
-        <Pill tone="brass">{r.department}</Pill>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {r.pre_arrival && <Pill tone="green">Pre-arrival</Pill>}
+          <Pill tone="brass">{r.department}</Pill>
+        </div>
       </div>
       <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--text-dim)" }}>{r.guest_name}</div>
       <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 14, fontSize: 11.5, color: "var(--text-muted)" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> Room {r.room}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <MapPin size={12} /> {r.pre_arrival ? "On arrival" : `Room ${r.room}`}
+        </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
           <Clock size={12} /> {fmtDateTime(r.completion_date ?? r.open_date)}
         </span>

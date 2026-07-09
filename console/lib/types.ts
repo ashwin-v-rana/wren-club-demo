@@ -93,6 +93,7 @@ export type ServiceRequest = {
   profile_id: string;
   guest_name: string;
   room: string;
+  pre_arrival: boolean;
   quantity: number;
   open_date: string;
   comment: string | null;

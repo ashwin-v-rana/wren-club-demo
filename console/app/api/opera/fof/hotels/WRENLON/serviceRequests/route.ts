@@ -14,7 +14,7 @@ export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("service_requests")
     .select(
-      "service_request_id, code, status, priority, department, profile_id, room, quantity, open_date, comment, completion_date, profiles(name_given, name_surname)"
+      "service_request_id, code, status, priority, department, profile_id, room, pre_arrival, quantity, open_date, comment, completion_date, profiles(name_given, name_surname)"
     )
     .order("open_date", { ascending: false });
 
@@ -30,6 +30,7 @@ export async function GET() {
     profile_id: r.profile_id,
     guest_name: guestNameOf(r.profiles),
     room: r.room,
+    pre_arrival: r.pre_arrival,
     quantity: r.quantity,
     open_date: r.open_date,
     comment: r.comment,

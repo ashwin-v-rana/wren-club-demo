@@ -327,7 +327,8 @@ create table service_requests (
   department         text not null,            -- copied from request_codes at insert
   profile_id         text not null references profiles,
   reservation_id     text not null references reservations,
-  room               text not null,            -- from reservation row, never customer input
+  room               text not null,            -- from reservation row, never customer input; 'On arrival' for pre-arrival
+  pre_arrival        boolean not null default false,  -- logged against an upcoming (not-yet-CheckedIn) stay; held for arrival (migration 16)
   quantity           int not null default 1,
   open_date          timestamptz not null default now(),
   comment            text,                     -- guest's own wording (esp. GENERAL_REQUEST)
@@ -431,7 +432,7 @@ create table auth_events (
 | `get_pre_arrival_member_reservations(p_hotel_id text, p_days_ahead int)` | member reservations arriving within window — feeds proactive workflow (read-only) |
 | `fire_pre_arrival_upgrade(p_hotel_id text, p_days_ahead int)` | demo-specific proactive send: for member reservations with an `Offered` upgrade in-window, substitute the fixed template (tenure + from/to room types, computed in SQL — no model), insert a `PRE_ARRIVAL_UPGRADE` row into `outbound_messages`; does **not** create the offer (`reset_demo` seeds it). Backs `POST /api/demo/fire-pre-arrival` |
 | `fire_milestone(p_profile_id text)` | demo-specific proactive send: compute `stays_this_year` live, substitute the fixed milestone template in SQL, insert a `MILESTONE_THANKS` row into `outbound_messages`. Backs `POST /api/demo/fire-milestone` |
-| `post_service_request(p_profile_id, p_code, p_quantity, p_comment)` | requires a `CheckedIn` reservation for profile (else `{"error":"NOT_IN_HOUSE"}`); room + department resolved server-side; returns full request JSON incl. `eta_text` |
+| `post_service_request(p_profile_id, p_code, p_quantity, p_comment)` | uses the profile's `CheckedIn` stay if any (in-house, room = assigned room, `pre_arrival:false`); else the nearest upcoming `Reserved` stay (pre-arrival, room = `'On arrival'`, `pre_arrival:true`, `arrival_date` set — held for arrival, migration 16); else `{"error":"NOT_IN_HOUSE"}` when the guest has no current or upcoming stay. Room + department resolved server-side; returns full request JSON incl. `eta_text`, `pre_arrival`, `arrival_date` |
 | `get_service_requests(p_profile_id text)` | open + recent requests with status timestamps |
 | `get_activity_availability(p_activity_type_code text, p_date date)` | open slots |
 | `post_activity_booking(p_profile_id, p_slot_id)` | atomic slot claim; links reservation_id if in-house |
