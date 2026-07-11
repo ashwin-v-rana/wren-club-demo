@@ -30,6 +30,7 @@ The Orchestrator handles `escalate` (and a direct "I want a human" request) via 
 |---|---|---|---|---|
 | `SYSTEM_ERROR` | Action agent invoked without valid authenticated context / empty `profile_id` | all agents (STEP 0 guard) | Orchestrator default warm handoff | wired |
 | `UNEXPECTED_DB_ERROR` | A SQL function returns an unexpected error after pre-checks (e.g. `post_reservation` ROOM_TYPE_NOT_FOUND, `cancel_reservation` NOT_FOUND for a just-read booking) | Room Update, Room Reservation | Orchestrator default warm handoff | wired |
+| `KNOWLEDGE_GAP` | A public FAQ question the Knowledge base cannot answer, **and** the customer has said yes to a human (consent-gated) | Concierge / FAQ | "Of course - let me connect you with a colleague who can help." → Pre-Escalation | wired |
 
 ## Not escalation — fixed deflection (for completeness)
 
