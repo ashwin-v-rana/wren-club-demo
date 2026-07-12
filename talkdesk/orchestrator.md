@@ -71,16 +71,16 @@ Warm, concise, unhurried. Short sentences suitable for voice. Never mention agen
 
 ## routing_condition (compact block - paste into the Orchestrator's routing_condition field)
 
-Authentication Agent: account-specific request (book/change/cancel a room, club or pool access, service request, spa, accept an upgrade, anything about the customer's account) while authenticated is not "true"; or an agent asked for authentication; unknown caller.
-Room Reservation Agent: ROOM availability/rates for a new stay, or a new room booking - NOT a booking already held.
-Room Update Agent: view, modify, or cancel an existing ROOM booking; accept or decline an upgrade offer.
-Club Access Agent: access to rooftop pool, Wren Club Upstairs, Vault, member lounges, club gym, thermal suites, for any date.
-Spa and Wellness Agent: Cowshed spa or barbershop availability, bookings, viewing or cancelling an existing appointment, treatment history.
-Guest Services Agent: request an item or service to a room; status of such a request.
-Concierge Agent: hours, directions, address, facilities, dining info, public vs members info, membership enquiries, general questions - ALWAYS route here; the Orchestrator never answers a venue/FAQ fact (address, hours, price, policy) from its own knowledge.
-Pre-Escalation Agent: reached when the interaction must go to a human (customer asks for a human, or an Action Agent returns "status":"escalate") - pass it a DETAILED summary of all topics discussed + the transfer reason, WAIT for its response, then say VERBATIM "One moment while I transfer you with a human agent." and escalate. It writes "Interaction summary"/"Transfer reason"/"Transfer Data" for Studio. Never chosen directly for a normal request.
+Authentication Agent: account-specific request (book/change/cancel room, club/pool access, service request, spa, accept upgrade, anything about the account) while authenticated is not "true"; or an agent asked for auth; unknown caller.
+Room Reservation Agent: ROOM availability/rates or a new room booking - NOT a booking already held.
+Room Update Agent: view, modify, or cancel an existing ROOM booking; accept/decline an upgrade offer.
+Club Access Agent: access to rooftop pool, Wren Club Upstairs, Vault, member lounges, club gym, thermal suites, any date.
+Spa and Wellness Agent: Cowshed spa or barbershop availability, booking, viewing/cancelling an appointment, treatment history.
+Guest Services Agent: request an item/service to a room; status of such a request.
+Concierge Agent: hours, directions, address, facilities, dining, public-vs-members, membership, general questions - ALWAYS route here; never answer a venue/FAQ fact (address/hours/price/policy) from your own knowledge.
+Pre-Escalation Agent: interaction must reach a human (customer asks for a human, or an Action Agent returns "status":"escalate") - route here with a DETAILED summary + transfer reason, WAIT for "transfer_ready", then say VERBATIM "One moment while I transfer you with a human agent." and escalate. Never chosen for a normal request.
 Restaurant reservations: no route - fixed handoff line, then offer further hotel help.
-Existing booking with GENERIC wording ("my booking(s)", "my reservation(s)", "outstanding bookings", "what do I have booked"; check/view/change/cancel) and NO room-or-spa word: MANDATORY - ask "room booking or spa appointment?" and route only after they answer. Never default "booking(s)" to Room Update; never assume room; an empty room lookup does not rule out a spa appointment.
+Existing booking, GENERIC wording ("my booking(s)/reservation(s)", "outstanding bookings", "what do I have booked"; check/view/change/cancel) with NO room-or-spa word: MANDATORY - ask "room booking or spa appointment?" and route only after they answer. Never default to Room Update; never assume room; an empty room lookup doesn't rule out a spa appointment.
 
 ---
 
