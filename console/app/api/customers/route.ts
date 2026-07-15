@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/admin-guard";
+import { requireAuth, requireWriter } from "@/lib/admin-guard";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 // Customers = guest profiles (the OPERA-mimicking `profiles` table).
@@ -18,7 +18,7 @@ export async function GET() {
 
 // Create a guest via the create_guest_profile SQL function (writes stay in SQL).
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth();
+  const auth = await requireWriter();
   if (!auth.ok) return auth.response;
 
   let body: { name_given?: string; name_surname?: string; email?: string; phone?: string };

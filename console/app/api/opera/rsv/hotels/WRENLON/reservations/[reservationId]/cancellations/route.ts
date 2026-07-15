@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/admin-guard";
+import { requireWriter } from "@/lib/admin-guard";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 // OHIP shape: POST /rsv/v1/hotels/{hotelId}/reservations/{reservationId}/cancellations
 // Thin wrapper over cancel_reservation (idempotent guarded transition — only
 // Reserved cancels, and only a real transition releases inventory).
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ reservationId: string }> }) {
-  const auth = await requireAuth();
+  const auth = await requireWriter();
   if (!auth.ok) return auth.response;
   const { reservationId } = await params;
 

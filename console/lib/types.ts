@@ -1,5 +1,5 @@
 // ---- Console staff (agents table, migration 11) --------------------------
-export type AgentRole = "csr" | "supervisor" | "admin";
+export type AgentRole = "csr" | "supervisor" | "admin" | "viewer";
 
 export type Agent = {
   id: string;

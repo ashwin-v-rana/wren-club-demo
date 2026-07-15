@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/admin-guard";
+import { requireWriter } from "@/lib/admin-guard";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 // Demo control (write via the SQL function, like the AI agents).
 export async function POST() {
-  const auth = await requireAuth();
+  const auth = await requireWriter();
   if (!auth.ok) return auth.response;
 
   const { data, error } = await supabaseAdmin.rpc("reset_demo");

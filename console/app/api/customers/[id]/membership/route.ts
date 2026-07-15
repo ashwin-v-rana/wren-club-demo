@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/admin-guard";
+import { requireWriter } from "@/lib/admin-guard";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 // Grant a Wren Club membership via grant_membership (writes stay in SQL — same
@@ -7,7 +7,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 // ALREADY_MEMBER / NOT_FOUND. Enrollment defaults to Europe/London "today" in
 // the function; an optional enrollment_date backdates tenure (membership_years).
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAuth();
+  const auth = await requireWriter();
   if (!auth.ok) return auth.response;
   const { id } = await params;
 

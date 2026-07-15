@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/admin-guard";
+import { requireWriter } from "@/lib/admin-guard";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 // Fires the milestone thank-you (defaults to Thompson P1001, the 3-stays member).
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth();
+  const auth = await requireWriter();
   if (!auth.ok) return auth.response;
 
   let profileId = "P1001";

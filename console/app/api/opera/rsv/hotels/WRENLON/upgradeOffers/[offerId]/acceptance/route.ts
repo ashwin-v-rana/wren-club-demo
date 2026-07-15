@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/admin-guard";
+import { requireWriter } from "@/lib/admin-guard";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 // POST /rsv/.../upgradeOffers/{offerId}/acceptance
@@ -7,7 +7,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 // function the AI agents call. Idempotent; the guest is never stranded (on
 // NO_AVAILABILITY the offer stays Offered and the reservation is untouched).
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ offerId: string }> }) {
-  const auth = await requireAuth();
+  const auth = await requireWriter();
   if (!auth.ok) return auth.response;
   const { offerId } = await params;
 

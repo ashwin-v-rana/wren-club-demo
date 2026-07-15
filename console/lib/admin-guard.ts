@@ -30,3 +30,15 @@ export async function requireAdmin(): Promise<Guard> {
   }
   return auth;
 }
+
+// Write endpoints — any authenticated staff EXCEPT read-only 'viewer' accounts.
+// GET/read routes keep using requireAuth; mutating routes use this so viewers
+// (alice/bob/carol demo logins) get a 403 instead of changing data.
+export async function requireWriter(): Promise<Guard> {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth;
+  if (auth.agent.role === "viewer") {
+    return { ok: false, response: NextResponse.json({ error: "Read-only account" }, { status: 403 }) };
+  }
+  return auth;
+}

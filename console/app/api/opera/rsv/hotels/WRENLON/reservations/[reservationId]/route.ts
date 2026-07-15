@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/admin-guard";
+import { requireWriter } from "@/lib/admin-guard";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
 // OHIP shape: PUT /rsv/v1/hotels/{hotelId}/reservations/{reservationId}
@@ -7,7 +7,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 // function the AI agents call (one contract, two clients). All params are
 // optional; put_reservation coalesces omitted fields to the existing booking.
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ reservationId: string }> }) {
-  const auth = await requireAuth();
+  const auth = await requireWriter();
   if (!auth.ok) return auth.response;
   const { reservationId } = await params;
 
