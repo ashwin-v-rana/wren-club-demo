@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Panel, StatusPill, td, th, Empty } from "@/components/ui";
 import { usePoll } from "@/hooks/usePoll";
+import { useSessionAgent } from "@/hooks/useSessionAgent";
 import { fmtDateTime } from "@/lib/format";
 import type { UpgradeOffer } from "@/lib/types";
 
@@ -13,6 +14,7 @@ export default function UpgradesPage() {
 
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const { canWrite } = useSessionAgent();
 
   async function accept(o: UpgradeOffer) {
     if (!window.confirm(`Accept ${o.guest_name}'s upgrade to ${o.to_name}? Their reservation will move room type.`)) return;
@@ -62,7 +64,7 @@ export default function UpgradesPage() {
                   <td style={{ ...td, color: "var(--text-muted)", whiteSpace: "nowrap" }}>{fmtDateTime(o.offered_at)}</td>
                   <td style={{ ...td, color: "var(--text-muted)", whiteSpace: "nowrap" }}>{fmtDateTime(o.expires_at)}</td>
                   <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
-                    {o.status === "Offered" ? (
+                    {o.status === "Offered" && canWrite ? (
                       <button className="btn" onClick={() => accept(o)} disabled={busy === o.offer_id} style={{ padding: "6px 14px", fontSize: 12 }}>
                         {busy === o.offer_id ? "Accepting…" : "Accept"}
                       </button>

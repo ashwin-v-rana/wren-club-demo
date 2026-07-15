@@ -22,5 +22,13 @@ export function useSessionAgent() {
     };
   }, []);
 
-  return { agent, loaded, isAdmin: agent?.role === "admin" };
+  // canWrite gates write UI. Gated on `loaded` so we never briefly flash write
+  // controls to a read-only viewer before /api/auth/me resolves. Cosmetic only —
+  // the server (requireWriter) is the real boundary.
+  return {
+    agent,
+    loaded,
+    isAdmin: agent?.role === "admin",
+    canWrite: loaded && agent != null && agent.role !== "viewer",
+  };
 }

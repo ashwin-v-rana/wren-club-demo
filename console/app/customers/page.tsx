@@ -5,12 +5,14 @@ import Link from "next/link";
 import { ChevronRight, UserPlus, X } from "lucide-react";
 import { Panel, td, th, Empty } from "@/components/ui";
 import { initials } from "@/lib/format";
+import { useSessionAgent } from "@/hooks/useSessionAgent";
 import type { ProfileRow } from "@/lib/types";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<ProfileRow[] | null>(null);
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { canWrite } = useSessionAgent();
 
   async function load() {
     const r = await fetch("/api/customers");
@@ -23,14 +25,16 @@ export default function CustomersPage() {
     <div style={{ maxWidth: 1080, display: "flex", flexDirection: "column", gap: 16 }}>
       {err && <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(165,63,43,0.10)", border: "1px solid rgba(165,63,43,0.35)", color: "#8f381f", fontSize: 13 }}>{err}</div>}
 
-      {creating && <CreateGuest onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} onError={setErr} />}
+      {creating && canWrite && <CreateGuest onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} onError={setErr} />}
 
       <Panel
         title="Guests"
         action={
-          <button className="btn" onClick={() => setCreating((v) => !v)} style={{ padding: "8px 14px" }}>
-            {creating ? <><X size={14} /> Close</> : <><UserPlus size={14} /> New guest</>}
-          </button>
+          canWrite ? (
+            <button className="btn" onClick={() => setCreating((v) => !v)} style={{ padding: "8px 14px" }}>
+              {creating ? <><X size={14} /> Close</> : <><UserPlus size={14} /> New guest</>}
+            </button>
+          ) : null
         }
       >
         {customers === null ? (

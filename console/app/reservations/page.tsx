@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Pencil, X } from "lucide-react";
 import { Panel, StatusPill, td, th, Empty } from "@/components/ui";
 import { usePoll } from "@/hooks/usePoll";
+import { useSessionAgent } from "@/hooks/useSessionAgent";
 import { fmtDate } from "@/lib/format";
 import type { Reservation, RoomType } from "@/lib/types";
 
@@ -22,6 +23,7 @@ export default function ReservationsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const { canWrite } = useSessionAgent();
 
   useEffect(() => {
     fetch("/api/opera/rsv/hotels/WRENLON/roomTypes")
@@ -87,6 +89,7 @@ export default function ReservationsPage() {
                 <FragmentRow
                   key={r.reservation_id}
                   r={r}
+                  canWrite={canWrite}
                   editing={editing === r.reservation_id}
                   busy={busy === r.reservation_id}
                   roomTypes={roomTypes}
@@ -105,9 +108,10 @@ export default function ReservationsPage() {
 }
 
 function FragmentRow({
-  r, editing, busy, roomTypes, onEdit, onCancel, onSaved, onError,
+  r, canWrite, editing, busy, roomTypes, onEdit, onCancel, onSaved, onError,
 }: {
   r: Reservation;
+  canWrite: boolean;
   editing: boolean;
   busy: boolean;
   roomTypes: RoomType[];
@@ -128,7 +132,7 @@ function FragmentRow({
         <td style={{ ...td, color: "var(--text-dim)" }}>{r.adults}</td>
         <td style={td}><StatusPill status={r.reservation_status} /></td>
         <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
-          {isEditable(r.reservation_status) ? (
+          {canWrite && isEditable(r.reservation_status) ? (
             <div style={{ display: "inline-flex", gap: 6 }}>
               <button className="btn-ghost" onClick={onEdit} disabled={busy} style={{ padding: "6px 10px", borderRadius: 8, fontSize: 12 }}>
                 {editing ? <><X size={13} /> Close</> : <><Pencil size={13} /> Edit</>}

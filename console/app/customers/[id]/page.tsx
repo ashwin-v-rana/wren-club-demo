@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Phone, CalendarClock, Pencil, Trash2, X, Award } from "lucide-react";
 import { StatTile, Panel, Pill, Empty } from "@/components/ui";
 import { fmtDate, initials } from "@/lib/format";
+import { useSessionAgent } from "@/hooks/useSessionAgent";
 import type { EntitlementContext } from "@/lib/types";
 
 export default function Guest360Page() {
@@ -17,6 +18,7 @@ export default function Guest360Page() {
   const [editing, setEditing] = useState(false);
   const [granting, setGranting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { canWrite } = useSessionAgent();
 
   const load = useCallback(() => {
     fetch(`/api/customers/${id}`)
@@ -69,22 +71,24 @@ export default function Guest360Page() {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {!ctx.is_member && (
-            <button className="btn-ghost" onClick={grant} disabled={granting} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
-              <Award size={14} /> {granting ? "Granting…" : "Grant membership"}
+        {canWrite && (
+          <div style={{ display: "flex", gap: 8 }}>
+            {!ctx.is_member && (
+              <button className="btn-ghost" onClick={grant} disabled={granting} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
+                <Award size={14} /> {granting ? "Granting…" : "Grant membership"}
+              </button>
+            )}
+            <button className="btn-ghost" onClick={() => setEditing((v) => !v)} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
+              {editing ? <><X size={14} /> Close</> : <><Pencil size={14} /> Edit</>}
             </button>
-          )}
-          <button className="btn-ghost" onClick={() => setEditing((v) => !v)} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
-            {editing ? <><X size={14} /> Close</> : <><Pencil size={14} /> Edit</>}
-          </button>
-          <button className="btn-ghost" onClick={del} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
-            <Trash2 size={14} /> Delete
-          </button>
-        </div>
+            <button className="btn-ghost" onClick={del} style={{ padding: "8px 12px", borderRadius: 10, fontSize: 12.5 }}>
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        )}
       </div>
 
-      {editing && (
+      {editing && canWrite && (
         <EditGuest ctx={ctx} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} onError={setErr} />
       )}
 

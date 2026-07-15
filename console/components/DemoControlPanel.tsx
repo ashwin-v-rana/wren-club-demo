@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SlidersHorizontal, X, RotateCcw, ChevronRight, Send } from "lucide-react";
+import { useSessionAgent } from "@/hooks/useSessionAgent";
 
 type Result = { label: string; ok: boolean; text: string } | null;
 
@@ -9,6 +10,10 @@ export function DemoControlPanel() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [result, setResult] = useState<Result>(null);
+  const { canWrite } = useSessionAgent();
+
+  // Every control here is a write — read-only viewers don't see the panel at all.
+  if (!canWrite) return null;
 
   async function run(label: string, url: string, body?: unknown, confirmMsg?: string) {
     if (confirmMsg && !window.confirm(confirmMsg)) return;
