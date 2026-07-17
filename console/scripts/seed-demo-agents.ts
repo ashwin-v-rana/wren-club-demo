@@ -36,9 +36,9 @@ type Demo = { email: string; fullName: string };
 
 // All three are read-only 'viewer' accounts; passwords are non-secret by design.
 const DEMO_AGENTS: Demo[] = [
-  { email: "alice@thewren.london", fullName: "Alice Hart" },
-  { email: "bob@thewren.london", fullName: "Bob Mensah" },
-  { email: "carol@thewren.london", fullName: "Carol Nguyen" },
+  { email: "alice@thewren-demo.com", fullName: "Alice Hart" },
+  { email: "bob@thewren-demo.com", fullName: "Bob Mensah" },
+  { email: "carol@thewren-demo.com", fullName: "Carol Nguyen" },
 ];
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
