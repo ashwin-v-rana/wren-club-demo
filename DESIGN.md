@@ -1,7 +1,7 @@
 # The Wren London — Multi-Agent AI Demo: Design Document
 
 **Version:** 1.1 (2026-07-02)
-**Owner:** Ashwin Rana, VP of Partner Solutions Engineering, Talkdesk
+**Owner:** Ashwin Rana, VP Partner Solutions Architecture, Talkdesk
 **Status:** Approved for build — function contract frozen
 **v1.1 changes:** `accept_upgrade_offer` full transaction contract (adds `DECLINED`/`NO_AVAILABILITY`); OTP confirmed as Talkdesk-workflow only (no SQL function); added proactive-send functions `fire_pre_arrival_upgrade`/`fire_milestone` with SQL-owned templates; `outbound_messages` v1 = proactive-only; `put_reservation` set-difference claim/release; `cancel_reservation` guard + only-`Reserved`-cancellable; `check_club_access` tie-breaks; confirmation-number retry loop.
 **Companion file:** `CLAUDE.md` (Claude Code build instructions — this document is the authoritative spec; CLAUDE.md defers to it)

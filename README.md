@@ -82,4 +82,4 @@ Active build. The design (schema, functions, personas, demo script) is complete.
 
 ---
 
-*Built by Ashwin Rana, VP of Partner Solutions Engineering, Talkdesk — for partner enablement.*
+*Built by Ashwin Rana, VP Partner Solutions Architecture, Talkdesk — for partner enablement.*
