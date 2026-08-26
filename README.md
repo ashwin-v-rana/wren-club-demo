@@ -63,7 +63,7 @@ Design principles that run through everything:
 
 1. Read `DESIGN.md` — it explains every deliberate choice, including the ones that look odd until you know why.
 2. Provision a Supabase project and apply the migrations in `supabase/migrations/`.
-3. Run `select reset_demo();` — all seed data is date-relative, so the demo world is always fresh.
+3. Run `select reset_demo();` — all seed data is date-relative, so the demo world is always fresh. Safe to re-run before any demo: it re-derives the three seeded personas and all transactional state, but leaves guests you added yourself (and their memberships) in place.
 4. `cd console && npm install && npm run dev` (env vars documented in `CLAUDE.md`).
 5. Wire the SQL functions as skills in your Talkdesk AI Agent environment per `DESIGN.md` §4–§7. Author each agent's instructions in a chat model (grounded in the function contract so skill bindings don't drift), then assemble and deploy the agent system in Talkdesk itself.
 

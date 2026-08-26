@@ -1,7 +1,9 @@
 # Seed offsets (mirrors DESIGN.md §9)
 
 All dates derive from `t = (now() at time zone 'Europe/London')::date`. No literal dates.
-`reset_demo()` re-derives the entire world; run it the morning of any demo.
+`reset_demo()` re-derives the three personas below + all transactional state; run it the morning of any demo.
+Guests added later (console / `grant_membership`) are NOT deleted — they keep profile + membership,
+but their transactional rows are truncated like everyone's, so `stays_this_year` returns to 0.
 
 ## Personas
 

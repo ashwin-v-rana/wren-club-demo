@@ -439,14 +439,14 @@ create table auth_events (
 | `get_activity_history(p_profile_id text)` | past `Completed` bookings — powers re-book suggestion; empty result ⇒ agent makes no suggestion |
 | `cancel_activity_booking(p_profile_id text, p_activity_booking_id text)` | spa counterpart to `cancel_reservation` (migration 10): idempotent, guarded transition scoped to the guest's own profile. Only a `Booked` appointment cancels; only a non-Cancelled→Cancelled transition releases the slot (`activity_slots.booked − 1`, so a second call never double-releases); `Completed`/`NoShow` → `NOT_CANCELLABLE`; owner mismatch or missing → `NOT_FOUND`. Returns `CANCELLED` / `ALREADY_CANCELLED` / `NOT_CANCELLABLE` / `NOT_FOUND` |
 | `log_auth_event(p_profile_id, p_channel, p_event_type, p_result)` | append a row to `auth_events` (authentication audit log). Called by the Auth Agent via execute_sql at each verification outcome: `phone_identified`/success (WhatsApp Tier 1), `auth_success`/success (OTP MATCH), `auth_failed`/failure (OTP NO_MATCH or no-match; empty profile_id → null) |
-| `reset_demo()` | truncate transactional rows; reseed to canonical state (below) |
+| `reset_demo()` | truncate transactional rows; reseed to canonical state (below). Re-derives **only** the seeded personas P1001–P1003 (+ M2001): both the `profiles` and `memberships` deletes are scoped to those ids, so guests added later via `create_guest_profile` / `grant_membership` survive a reseed with their membership intact (migration 18). Their *transactional* rows are still truncated like everyone's — preserved guests come back with `stays_this_year = 0`. Returns `preserved_guests` alongside the counts. Both deletes must stay qualified (`= any(...)`): the service-role/PostgREST connection enforces a "DELETE requires a WHERE clause" guard that the SQL editor does not (migration 12) |
 | `advance_demo(p_step text)` | scripted state flips, e.g. `'complete_blanket_request'` (→ Completed + completion_date), `'check_in_thompson'`, `'expire_offers'` |
 
 ---
 
 ## 9. Personas & Seed Data
 
-**Seeding principle: every date is an offset from `(now() at time zone 'Europe/London')::date` — no literal dates anywhere.** `reset_demo()` re-derives the world; run it the morning of any demo.
+**Seeding principle: every date is an offset from `(now() at time zone 'Europe/London')::date` — no literal dates anywhere.** `reset_demo()` re-derives the world; run it the morning of any demo. "The world" means the three seeded personas below plus all transactional state — **not** guests added since (see §8): those keep their profile and membership across a reseed.
 
 ### Persona 1 — James Thompson (the member journey)
 - `profiles`: P1001, phone +44 7700 900101 (WhatsApp-capable), james.thompson@example.co.uk
