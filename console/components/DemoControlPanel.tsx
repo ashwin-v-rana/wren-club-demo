@@ -60,7 +60,7 @@ export function DemoControlPanel() {
 
       <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 14 }}>
         <Group title="Reset">
-          <DarkBtn busy={busy} label="Reset demo" icon={<RotateCcw size={13} />} onClick={() => run("Reset demo", "/api/demo/reset", undefined, "Reset the demo? This truncates and reseeds all transactional data.")} />
+          <DarkBtn busy={busy} label="Reset demo" icon={<RotateCcw size={13} />} onClick={() => run("Reset demo", "/api/demo/reset", undefined, "Reset the demo? This truncates and reseeds all transactional data. Guest profiles you added are kept.")} />
         </Group>
 
         <Group title="Advance">
