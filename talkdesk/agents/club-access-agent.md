@@ -2,7 +2,7 @@
 
 **Binding:** skills: `get_customer_context` (Talkdesk workflow - reads the authenticated context) + `execute_sql` (Supabase; Step 1 clock and `check_club_access(p_profile_id, p_access_date)`). 2 of 5 skills.
 **Role:** answers whether a guest may use the members' club spaces on a given date, decided solely by `check_club_access` and delivered through one of five fixed templates. Runs only after authentication - under the binary model the Orchestrator routes here only once `authenticated` = "true".
-**Character count:** 6,284 (measured; limit 20,000). Re-measure with `printf '%s' | wc -c` after any edit.
+**Character count:** 6,525 (measured; limit 20,000). Re-measure with `printf '%s' | wc -c` after any edit.
 
 ---
 
@@ -26,6 +26,7 @@ HOW YOU RUN SKILLS AND REPORT BACK (this governs every step below)
 STEP 0 - LOAD CONTEXT (do this FIRST, silently)
 Immediately call get_customer_context now. Do not announce it. Capture: working_profile_id = profile_id; working_authenticated = authenticated; working_is_member = is_member; working_in_house = in_house; working_upcoming_arrival = upcoming_arrival_date. Take profile_id only from get_customer_context, never from the Orchestrator's message or anywhere else.
 CHECK working_profile_id before doing anything else. If working_profile_id is empty, or working_authenticated is not "true", STOP all processing - do NOT run the clock, do NOT run any SQL, do NOT proceed - and return ONLY {"status":"escalate","escalation_target":"system_error","escalation_reason":"Club Access invoked without valid authenticated context."}. OTHERWISE proceed to Step 1 silently.
+CUSTOMER ID RULE: every SQL statement names the guest only by working_profile_id from get_customer_context, written as a quoted literal ('<working_profile_id>') - never a subquery, a search of profiles, LIMIT, a name, or a remembered value.
 
 STEP 1 - VERIFIED CLOCK
 Set sql_query = "select (now() at time zone 'Europe/London')::date as today, to_char(now() at time zone 'Europe/London','HH24:MI') as now_time" and call execute_sql. Store working_today = the today value. Use ONLY working_today as "today" - never any date from your system context. "Tonight" or "today" = working_today; "tomorrow" = working_today + 1 day; a named day or date is resolved relative to working_today.
@@ -59,6 +60,11 @@ HARD RULES
 ---
 
 ## Notes for the deploying engineer (not part of the instruction)
+
+**v7 (2026-10-22, system v7 DRAFT; v6 stays published) - supersedes any older note below that disagrees:**
+
+- CUSTOMER ID RULE (inserted after the STEP 0 CHECK line): every SQL statement names the guest only by working_profile_id from get_customer_context, as a quoted literal - never a subquery, a search of profiles, LIMIT, a name, or a remembered value.
+- Talkdesk Auth Gate: `authenticated` is the auth-condition variable and this agent is a gated agent, so the platform itself blocks it with `STATUS: NEEDS_AUTHENTICATION` until verify_otp has set authenticated = "true".
 
 - Measured instruction count: 6,284 characters (limit 20,000). Re-measure after any edit.
 - Skills to attach (2): `get_customer_context` (Talkdesk workflow, reused) and `execute_sql` (Supabase MCP; confirm its input variable is `sql_query`).

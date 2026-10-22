@@ -6,7 +6,25 @@ Single source of truth for **when any agent hands the customer to a human**. As 
 {"status":"escalate","escalation_target":"human","escalation_reason":"<CODE>","customer_message":"<handoff line>"}
 ```
 
-The Orchestrator handles `escalate` (and a direct "I want a human" request) via the Talkdesk **Pre-Escalation Agent** pattern: deliver any action-agent `customer_message` verbatim, then route to the **Pre-Escalation Agent** passing a detailed interaction summary + the transfer reason, wait for its `transfer_ready` response, then say "One moment while I transfer you with a human agent." and escalate. The Pre-Escalation Agent stores the summary + reason into the "Interaction summary" and "Transfer reason" Orchestrator variables and runs the **"Load Transfer Data"** skill, which sets **"Transfer Data"** (the payload assigned to the Application Output → Studio's `escalate_to`). Agent instruction: `talkdesk/agents/pre-escalation-agent.md`; Orchestrator wiring: `talkdesk/orchestrator.md`. It consumes `escalation_reason` from this table (and can derive a Transfer Queue from it — see the agent file's optional-upgrade note). The `Load Transfer Data` workflow and Studio parse/config are built in Talkdesk, not this repo.
+The Orchestrator handles `escalate` (and a direct "I want a human" request) via the Crestline Escalation Agent pattern (system v7, 2026-10-22):
+
+1. It routes SILENTLY to the **Pre-Escalation Agent**, passing `escalation_target`, `escalation_reason`, an Interaction summary written as `ISSUE: ... || ACTIONS: ...` and a Transfer reason written as `TEAM: ... || NEXT ACTION: ...`.
+2. The Pre-Escalation Agent runs **"Load Transfer Data"**, which reads the guest's verified name, profile id, phone and email from the session itself and writes **"Transfer Data"** (the Application Output Studio receives). It returns `{"status":"transfer_ready"}` or `{"status":"transfer_error"}` (one CONTINUE retry, then the `system_error` line so the customer is never stranded).
+3. The Orchestrator calls the builtin **`transfer_to_human`** with the message set to the team line below. That call is the transfer - `reply_to_user` does not escalate.
+
+Agent instruction: `talkdesk/agents/pre-escalation-agent.md`; Orchestrator wiring: `talkdesk/orchestrator.md`.
+
+### Human teams (`escalation_target`) and the line `transfer_to_human` speaks
+
+The Pre-Escalation Agent uses the target the Orchestrator names, otherwise picks it from the reason code as below.
+
+| Target | Use for | Line |
+|---|---|---|
+| `reservations` | `PARTY_OVER_MAX`, `STAY_OVER_MAX`, `RESERVATION_LIMIT`, `MODIFY_RESERVATION`, `ADA_ROOM`, any room booking or stay matter | "Let me connect you with our reservations team, who can take care of that for you." |
+| `spa` | a Cowshed spa or barbershop appointment or treatment | "Let me connect you with our Cowshed spa team, who can take care of that for you." |
+| `front_desk` | `PAYMENT`, an in-room service request, any other on-site matter | "Let me connect you with our front desk team, who can take care of that for you." |
+| `human_request` | `KNOWLEDGE_GAP`, "I want a person", anything else; also the default when no target is named | "Of course - let me connect you with a colleague who can help right away." |
+| `system_error` | `SYSTEM_ERROR`, `UNEXPECTED_DB_ERROR`, any skill/DB error; also used when Pre-Escalation fails twice | "I'm having a little trouble on my end. Let me get you to a colleague who can help right away." |
 
 ## Business-policy limits (escalate to human)
 
