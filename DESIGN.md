@@ -47,10 +47,11 @@ The signature demo moment: a non-member with an upcoming stay asks *"Can I use t
 | Constraint | Value | Design consequence |
 |---|---|---|
 | Hierarchy | Flat: 1 Orchestrator + Action Agents | No agent-to-agent calls; all routing through Orchestrator |
-| Max Action Agents | 10 | v1 uses 7; 3 slots reserved |
+| Max Action Agents | 10 | v1 uses 8 (Authentication, Club Access, Concierge, Guest Services, Pre-Escalation, Room Reservation, Room Update, Spa and Wellness); 2 slots left |
 | Max skills per Action Agent | 5 | See skill budget per agent in §4 |
 | Orchestrator | Routes only; zero business logic; only party that talks to customer | Disambiguation questions allowed (routing); entitlement/date logic forbidden |
-| Agent prompt length | ~12,000–14,000 chars practical ceiling (observed) | Measure with `printf '%s' "$TEXT" \| wc -c`; never estimate |
+| Agent prompt length (hard) | 20,000 chars per instruction field | Platform-enforced; a longer value is rejected. Spa and Wellness ships at 19,512 (v7) |
+| Agent prompt length (practical) | ~12,000–14,000 chars (observed) | NOT a platform limit — instruction-following degrades above it. Measure with `printf '%s' "$TEXT" \| wc -c`; never estimate. Going over is a deliberate trade, not an accident |
 | WhatsApp session | Closes 15 min after last message; reconnection = new session, re-auth required | No multi-step flow parks state in conversation; all in-progress state lives in tables (see `upgrade_offers`) |
 | Timezone | Platform Date Resolution Engine injects UTC despite `Europe/London` Application Input (bug filed) | Step 1.0 `execute_sql` clock fetch in every time-guarded agent; `ai_agent_settings.timezone` set per touchpoint (voice, chat, WhatsApp = 3 separate Application Inputs), JSON uses `:` not `=` |
 
@@ -535,6 +536,6 @@ Purpose: the **staff-side view** that makes the invisible visible during demos �
 1. Supabase: schema (§8) → functions → seed + `reset_demo()`/`advance_demo()` → SQL-level tests of every function including failure paths (NO_AVAILABILITY, NOT_IN_HOUSE, EXPIRED offer). Include the upgrade sold-out case: sell out COSY_PLUS for Thompson's dates, call `accept_upgrade_offer('U4001')` → `NO_AVAILABILITY`, and verify the offer is still `Offered`, the reservation still `COSY`, and inventory unchanged.
 2. Console app (§11) against the same functions
 3. Talkdesk: Auth Agent extension → Club Access Agent (smallest, proves the pattern) → Guest Services → Room Reservation/Update → Spa → Concierge → Orchestrator routing + deflection.
-   **Authoring vs. deployment:** author each agent's *instruction text* (persona, step logic, fixed templates, routing conditions) in a chat model — ideally one grounded in the frozen §8 function contract so skills bind to exact names/params/return shapes and templates never drift — then *assemble and deploy* the runnable agent system (Orchestrator + Action Agents, skill→tool/MCP bindings, export/import JSON) inside Talkdesk itself. Measure every agent prompt against the ~12–14k char ceiling with `printf '%s' "$TEXT" | wc -c` (§2); never estimate.
+   **Authoring vs. deployment:** author each agent's *instruction text* (persona, step logic, fixed templates, routing conditions) in a chat model — ideally one grounded in the frozen §8 function contract so skills bind to exact names/params/return shapes and templates never drift — then *assemble and deploy* the runnable agent system (Orchestrator + Action Agents, skill→tool/MCP bindings, export/import JSON) inside Talkdesk itself. Measure every agent prompt with `printf '%s' "$TEXT" | wc -c` against both limits in §2 - the 20,000-char hard field limit and the ~12-14k practical ceiling; never estimate.
 4. Per-touchpoint config: `ai_agent_settings.timezone` on voice, chat, WhatsApp (JSON `:` syntax) — verify each with a "what is the current time?" diagnostic before any flow testing
 5. End-to-end script rehearsal ×3 with `reset_demo()` between runs
