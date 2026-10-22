@@ -102,7 +102,7 @@ Existing booking, GENERIC wording ("my booking(s)/reservation(s)", "outstanding 
 
 ## Notes for the deploying engineer (not part of the instruction)
 
-**v7 (2026-10-22, system v7 DRAFT; v6 stays published) - supersedes any older note below that disagrees:**
+**v7 (2026-10-22, system v7, PUBLISHED 2026-10-22; v6 kept as rollback) - supersedes any older note below that disagrees:**
 
 - Both blocks re-synced from v7 (instruction 14,700 chars; routing_condition 1,994). They MUST be written together: on 2026-10-22 a rule added only to the instruction ("never ask for dates yourself") had no effect - "book a room" still got the Orchestrator's own "What dates?" - until the same rule went into routing_condition as its FIRST RULE line.
 - "YOU NEVER WRITE YOUR OWN QUESTIONS" section after the opening paragraph; the "- Authentication Agent:" routing bullet restored from v6.

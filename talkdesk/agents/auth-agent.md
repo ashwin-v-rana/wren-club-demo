@@ -64,7 +64,7 @@ HARD RULES
 
 ## Notes for the deploying engineer (not part of the instruction)
 
-**v7 (2026-10-22, system v7 DRAFT; v6 stays published) - supersedes any older note below that disagrees:**
+**v7 (2026-10-22, system v7, PUBLISHED 2026-10-22; v6 kept as rollback) - supersedes any older note below that disagrees:**
 
 - Ported the Crestline deterministic verify. `verify_otp` reads `sent_pin` and `pending_profile_id` from the session and returns MATCH only when sent_pin is 6 digits, the entered code equals it, AND pending_profile_id is non-empty; on MATCH it sets `authenticated` = "true" and `profile_id`. The model never sets either. `set_customer_context` no longer takes `profile_id` / `authenticated`.
 - `send_one_time_pin` is one split workflow (US sender for +1 numbers, UK otherwise); `send_one_time_pin_UK` is removed.

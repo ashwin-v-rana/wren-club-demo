@@ -26,7 +26,7 @@ Demo backend and staff-facing console for a Talkdesk Multi-Agent AI reference de
 /supabase
   /migrations        -- numbered SQL migrations: 01_schema, 02_functions, 03_seed_static, 04_demo_functions, 05_harden, 06_entitlement_fields, 07_membership_id, 08_auth_events, 09_fix_upgrade_greeting, 10_cancel_activity_booking, 11_console_agents, 12_fix_reset_demo_delete, 13_guest_profile_crud, 14_spa_time_gate, 15_grant_membership, 16_prearrival_service_requests, 17_viewer_role, 18_reset_demo_preserve_guests, 19_extend_demo_inventory
   seed-notes.md      -- offsets table for persona data (mirrors DESIGN.md §9)
-/talkdesk            -- deployed agent instructions (one .md per agent; ASCII-only; published as system version 2)
+/talkdesk            -- deployed agent instructions (one .md per agent; ASCII-only; matches published system version 7)
   orchestrator.md          -- Wren Concierge (SUPERVISING_AGENT), binary auth, routes-only
   /agents                  -- auth-agent, club-access-agent, room-update-agent, room-reservation-agent, spa-wellness-agent, guest-services-agent (Concierge/FAQ pending)
   escalation-reasons.md    -- registry of human-handoff triggers (3 booking limits + operational reasons)

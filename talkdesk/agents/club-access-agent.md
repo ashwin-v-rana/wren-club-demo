@@ -61,7 +61,7 @@ HARD RULES
 
 ## Notes for the deploying engineer (not part of the instruction)
 
-**v7 (2026-10-22, system v7 DRAFT; v6 stays published) - supersedes any older note below that disagrees:**
+**v7 (2026-10-22, system v7, PUBLISHED 2026-10-22; v6 kept as rollback) - supersedes any older note below that disagrees:**
 
 - CUSTOMER ID RULE (inserted after the STEP 0 CHECK line): every SQL statement names the guest only by working_profile_id from get_customer_context, as a quoted literal - never a subquery, a search of profiles, LIMIT, a name, or a remembered value.
 - Talkdesk Auth Gate: `authenticated` is the auth-condition variable and this agent is a gated agent, so the platform itself blocks it with `STATUS: NEEDS_AUTHENTICATION` until verify_otp has set authenticated = "true".

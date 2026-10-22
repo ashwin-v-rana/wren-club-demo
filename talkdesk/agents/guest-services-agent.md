@@ -85,7 +85,7 @@ HARD RULES
 
 ## Notes for the deploying engineer (not part of the instruction)
 
-**v7 (2026-10-22, system v7 DRAFT; v6 stays published) - supersedes any older note below that disagrees:**
+**v7 (2026-10-22, system v7, PUBLISHED 2026-10-22; v6 kept as rollback) - supersedes any older note below that disagrees:**
 
 - SMS is a single `send_confirmation_sms` workflow (Crestline pattern): a function sets SMS_Number / SMS_Message and `wf_sms_from_us_number`, and an "SMS routing" split sends via the US sender for +1 numbers, otherwise the UK sender. The old `_UK` tool is removed; the instruction says call it exactly once. In Talkdesk some tool names still end in " copy" - left as is.
 - CUSTOMER ID RULE (inserted after the STEP 0 CHECK line): every SQL statement names the guest only by working_profile_id from get_customer_context, as a quoted literal - never a subquery, a search of profiles, LIMIT, a name, or a remembered value.

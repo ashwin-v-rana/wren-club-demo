@@ -43,7 +43,7 @@ You are the Pre-Escalation Agent for The Wren Hotel & Members' Club, London. Eve
 
 ## Notes for the deploying engineer (not part of the instruction)
 
-**v7 (2026-10-22, system v7 DRAFT; v6 stays published) - supersedes any older note below that disagrees:**
+**v7 (2026-10-22, system v7, PUBLISHED 2026-10-22; v6 kept as rollback) - supersedes any older note below that disagrees:**
 
 - Ported from the Crestline Escalation Agent. The Orchestrator passes escalation_target, escalation_reason, an Interaction summary written as "ISSUE: ... || ACTIONS: ..." and a Transfer reason written as "TEAM: ... || NEXT ACTION: ...". This agent returns {"status":"transfer_ready"} or {"status":"transfer_error"}; the Orchestrator then calls the builtin `transfer_to_human` with the team line (see orchestrator.md and the team table in escalation-reasons.md).
 - `Load Transfer Data` clears "Transfer Data" first (a stale payload can never look ready), then writes "CUSTOMER: <name> | Profile P#### | Identity verified (SMS code) || CONTACT: <phone> | <email> || ISSUE: ... || COMPLETED: ... || TEAM: ... || NEXT ACTION: ..." (unverified callers get "CUSTOMER: Unverified caller | Verify identity before discussing account details"). It strips UUIDs and placeholder text. It ends in an end-flow; the v7 GUI build's end-automation exit, literal `%{transferData}` app output and missing output params were replaced.
