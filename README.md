@@ -56,7 +56,7 @@ Design principles that run through everything:
 | `DESIGN.md` | The authoritative spec: agents, entitlement design, full schema, personas, demo script |
 | `CLAUDE.md` | Build instructions for Claude Code (Supabase migrations + console app) |
 | `supabase/` | Schema, functions, and date-relative seed migrations — implemented and tested *(`migrations/01`–`13`, plus `seed-notes.md`)* |
-| `talkdesk/` | Deployed agent instructions (`orchestrator.md`, `agents/*.md`) + `escalation-reasons.md` — one file per agent, pasted into Talkdesk; six agents built and published |
+| `talkdesk/` | The Talkdesk agent system: `wren-ai-agent-system.json` (full export of the published system - import it into Talkdesk) and `AGENT_DESIGN.md` (how the nine agents fit together and why) |
 | `console/` | Next.js front-desk console — staff auth, guest management, live demo boards, and demo controls *(built: Phase 1 auth admin + Phase 2 boards)* |
 
 ## Getting started
