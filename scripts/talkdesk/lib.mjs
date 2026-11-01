@@ -10,7 +10,7 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const EXPORT_FILE = resolve(ROOT, 'talkdesk/wren-ai-agent-system.json');
 export const BACKUP_DIR = resolve(ROOT, 'scripts/talkdesk/.backups');
 export const DEFAULT_SYSTEM_ID = 'c66f7a06-2b57-4cd4-b84f-bec684881ce9'; // Wren_Hotel_Members_Club_Demo
-export const DEFAULT_VERSION = 10; // the current DRAFT; bump after every publish
+export const DEFAULT_VERSION = 11; // the current DRAFT; bump after every publish
 
 const TOKEN_URL = 'https://partner-team1.talkdeskid.com/oauth/token';
 const API = 'https://api.talkdeskapp.com/multi-agent/manage';
