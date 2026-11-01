@@ -1,0 +1,7 @@
+{
+  "name": "wren-hotel-talkdesk-tests",
+  "private": true,
+  "description": "Scripted customer test suite for the Wren hotel + members' club Talkdesk AI agent system (ported from the restaurant / Crestline suites)",
+  "type": "module",
+  "dependencies": { "ws": "^8.18.0" }
+}

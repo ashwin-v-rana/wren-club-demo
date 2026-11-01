@@ -3,3 +3,11 @@
 node_modules/
 .next/
 .DS_Store
+
+# Talkdesk test harness: run files hold full transcripts and LLM prompts; token cache
+scripts/talkdesk/tests/runs/
+scripts/talkdesk/tests/.tok
+scripts/talkdesk/tests/.logs/
+
+# Talkdesk agent-system backups written by scripts/talkdesk/put.mjs (full live configs)
+scripts/talkdesk/.backups/

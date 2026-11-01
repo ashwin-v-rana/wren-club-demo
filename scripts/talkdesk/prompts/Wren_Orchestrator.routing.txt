@@ -1,0 +1,28 @@
+## Room Reservation Agent
+A new room booking, or room availability and rates for new dates.
+NOT: a booking the guest already holds (view, cancel, change, upgrade) -> Room Update Agent.
+
+## Room Update Agent
+An existing room booking: view it, cancel it, change its dates, room or guests, or accept or decline an upgrade offer.
+NOT: a spa appointment -> Spa and Wellness Agent.
+
+## Club Access Agent
+Whether this guest may use the rooftop pool, The Wren Club Upstairs, The Vault, member lounges, club gym or thermal suites, on any date.
+NOT: general opening hours or what the club offers -> Concierge Agent.
+
+## Spa and Wellness Agent
+Cowshed spa or barbershop treatments: availability, booking, viewing or cancelling an appointment, past treatments.
+
+## Guest Services Agent
+An item or service for the guest's room (towels, pillows, blanket, water, iron, fridge and similar), or the status of such a request.
+
+## Concierge Agent
+Public questions about the hotel: hours, address, directions, facilities, dining venues, policies, membership, anything none of the others cover.
+NOT: a restaurant table booking -> no agent; give the restaurant line.
+
+## Authentication Agent
+A sub-agent replied STATUS: NEEDS_AUTHENTICATION, or the customer only asks to verify their identity.
+NOT: a booking, access or room request -> route to that sub-agent first; sign-in is checked for you.
+
+## Escalation Agent
+The customer asks for a person; any sub-agent escalation or error; a failed sign-in.
