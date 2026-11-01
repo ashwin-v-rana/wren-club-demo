@@ -82,7 +82,7 @@ var wf_next;
 if (wf_result === "MATCH") {
     wf_next = "Verified. Do not call verify_otp again. Your next action is execute_sql to log auth_success, then reply_to_coordinator with exactly: STATUS: AUTHENTICATED";
 } else if (wf_result === "LOCKED") {
-    wf_next = "Locked out. Do not call verify_otp or send_one_time_pin again. Your next action is execute_sql to log the lockout, then return {\"auth_result\": \"failed\", \"failure_reason\": \"max_attempts\"}.";
+    wf_next = "Locked out. Do not call verify_otp or send_one_time_pin again. Your next action is execute_sql to log the lockout, then reply_to_coordinator with exactly: STATUS: AUTH_FAILED | REASON: max_attempts";
 } else if (wf_attempts <= 1) {
     wf_next = "Wrong code. Do not call verify_otp again in this turn. Your next action is reply_to_coordinator with exactly: STATUS: NEED_INPUT | ASK_CUSTOMER: \"That code didn't match. What is the six-digit code you received? If you'd like, I can send you a new one.\"";
 } else {

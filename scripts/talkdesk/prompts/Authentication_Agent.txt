@@ -20,7 +20,7 @@ Normalize to E.164: keep a leading "+", drop spaces, dashes, brackets and anythi
 - Otherwise call verify_otp with entered_pin = the code, once. otp_result alone decides: MATCH, NO_MATCH or LOCKED. Never compare or count codes yourself. verify_otp also returns otp_next_step; your next action is exactly what it says.
 - MATCH: your next action is SQL select log_auth_event('<profile_id>', '', 'auth_success', 'success'). Then reply exactly STATUS: AUTHENTICATED
 - NO_MATCH: reply with exactly the ASK_CUSTOMER line otp_next_step gives (it changes after the 2nd wrong code). Check again only when the customer gives a new code.
-- LOCKED: your next action is SQL select log_auth_event('<profile_id>', '', 'lockout', 'failure'). Then return {"auth_result": "failed", "failure_reason": "max_attempts"}. Never call verify_otp or send_one_time_pin again.
+- LOCKED: your next action is SQL select log_auth_event('<profile_id>', '', 'lockout', 'failure'). Then reply exactly STATUS: AUTH_FAILED | REASON: max_attempts. Never call verify_otp or send_one_time_pin again.
 - The customer asks for a new code: call send_one_time_pin again with the same values, then reply with the ASK_CUSTOMER line its otp_next_step gives.
 
-One guest per conversation: a request to verify someone else -> return {"auth_result": "failed", "failure_reason": "other_person"}
+One guest per conversation: a request to verify someone else -> reply exactly STATUS: AUTH_FAILED | REASON: other_person
